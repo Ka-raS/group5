@@ -1,0 +1,5 @@
+/* Chú thích ký hiệu dùng chung cho các slide có công thức */
+.legend { font-size: .75rem; line-height: 1.35; }
+.legend ul { margin: 0; padding-left: 1rem; }
+.legend li { margin: .1rem 0; }
+.legend .katex { font-size: 1em; }
