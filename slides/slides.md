@@ -236,7 +236,7 @@ Cùng **một** bộ trọng số dùng ở **mọi** bước · Khi học, sai 
 <!--
 **[Người 1 · ~1.5 phút]**
 
-Ôn lại nhanh RNN mà các bạn đã làm. Ý tưởng rất đơn giản: RNN đọc câu từng từ một, và luôn giữ một "bản tóm tắt" những gì đã đọc. Bản tóm tắt này có tên chuyên môn là trạng thái ẩn, hidden state.
+Ôn lại nhanh RNN mà các bạn đã làm. Ý tưởng rất đơn giản: RNN đọc câu từng từ một, và luôn giữ một "bản tóm tắt" những gì đã đọc. Bản tóm tắt này hay còn gọi là trạng thái ẩn, tên tiếng Anh là hidden state.
 
 Ở mỗi bước, bản tóm tắt mới được tính từ hai thứ: bản tóm tắt cũ, và từ đang đọc. Cả hai được nhân với trọng số, cộng lại, rồi đưa qua hàm tanh để ép về khoảng từ trừ 1 đến 1. Công thức trên slide chỉ nói đúng điều đó.
 
@@ -448,7 +448,7 @@ Cảm ơn Đại. Mình bắt đầu bằng bức tranh tổng thể.
 
 Bên trái là RNN: chỉ có một bộ nhớ, chính là bản tóm tắt. Ở mỗi bước, bản tóm tắt này bị trộn với từ mới, đi qua hàm tanh, và được viết lại hoàn toàn.
 
-Bên phải là LSTM. Các bạn để ý đường màu xanh nằm ngang phía trên. Đó là bộ nhớ dài hạn, tên chuyên môn là trạng thái ô nhớ, tiếng Anh là cell state.
+Bên phải là LSTM. Các bạn để ý đường màu xanh nằm ngang phía trên. Đó là bộ nhớ dài hạn, hay còn gọi là trạng thái ô nhớ, tên tiếng Anh là cell state.
 
 [click] Đường này chạy thẳng qua ô giống như một băng chuyền. Trên đường đi chỉ có hai thao tác: xóa bớt một phần, và cộng thêm thông tin mới. Không có gì viết lại toàn bộ. Đây chính là ô nhớ giữ nguyên của Hochreiter mà bạn Đại vừa kể.
 
@@ -599,7 +599,7 @@ $c_t = f_t \odot c_{t-1} + i_t \odot \tilde c_t$
 <!--
 **[Người 2 · ~1 phút]**
 
-Bây giờ ghép hai cổng lại. Đây là công thức quan trọng nhất của LSTM, và mình viết nó bằng lời: bộ nhớ mới bằng cổng quên nhân bộ nhớ cũ, cộng với cổng ghi nhân nội dung mới. Nói cách khác: xóa bớt một phần cái cũ, rồi cộng thêm một phần cái mới.
+Bây giờ ghép hai cổng lại. Đây là công thức quan trọng nhất của LSTM, và mình giải thích nó bằng một câu: bộ nhớ mới sẽ bằng tổng của cổng quên nhân bộ nhớ cũ và cổng ghi nhân nội dung mới. Nói cách khác: xóa bớt một phần cái cũ, rồi cộng thêm một phần cái mới.
 
 [click] So với RNN: ở RNN, mỗi bước bản tóm tắt bị viết lại hoàn toàn, nhân với trọng số rồi đi qua tanh.
 
@@ -650,7 +650,9 @@ Công thức: $o_t = \sigma(W_o[h_{t-1}, x_t] + b_o)$ · $h_t = o_t \odot \tanh(
 
 Cổng cuối cùng là cổng đọc, tiếng Anh là output gate, màu tím.
 
-Ô nhớ là thứ cất giữ bên trong. Đầu ra của mỗi bước được đọc ra từ ô nhớ qua hai bước: đưa bộ nhớ qua hàm tanh để ép về khoảng từ trừ 1 đến 1, rồi nhân với cổng đọc. Cổng đọc lại là một cái van, quyết định ở bước này cho đọc ra bao nhiêu.
+Những gì được ghi vào ô nhớ chỉ nằm bên trong LSTM; bên ngoài không nhìn thấy trực tiếp. Thứ bên ngoài nhận được ở mỗi bước, và dùng để đoán từ tiếp theo, là đầu ra. Cổng đọc quyết định lấy bao nhiêu từ bộ nhớ ra làm đầu ra. Giống như một cuốn sổ ghi chú: mình ghi nhiều thứ vào sổ, nhưng lúc nói chuyện chỉ đọc ra phần đang cần.
+
+Cụ thể có hai bước: đưa bộ nhớ qua hàm tanh để ép về khoảng từ trừ 1 đến 1, rồi nhân với cổng đọc. Cổng đọc cũng là một cái van từ 0 đến 1: bằng 0 là không cho gì ra, bằng 1 là cho ra hết.
 
 [click] Nhờ vậy, mạng có thể cất chữ "Pháp" trong ô nhớ suốt 30 bước mà không làm nhiễu đầu ra ở các bước giữa: cổng đọc đóng thì thông tin vẫn nằm yên trong ô nhớ.
 
@@ -719,11 +721,11 @@ Ký hiệu: $x$ đầu vào · $h$ đầu ra (trạng thái ẩn) · $c$ bộ nh
 
 [click] Việc hai: chuẩn bị ghi. Tạo nội dung mới, và cổng ghi quyết định ghi bao nhiêu.
 
-[click] Việc ba: cập nhật. Bộ nhớ mới bằng phần cũ đã xóa bớt cộng phần mới.
+[click] Việc ba: cập nhật bộ nhớ. Giữ lại phần cũ sau khi đã xóa bớt, rồi cộng thêm phần mới vừa ghi vào.
 
 [click] Việc bốn: đọc. Cổng đọc quyết định lấy ra bao nhiêu từ bộ nhớ để làm đầu ra.
 
-Công thức nằm dưới mỗi dòng cho bạn nào muốn đối chiếu với sách. Các bạn để ý ba cổng và phần nội dung mới đều có cùng một dạng, mỗi phần có một bộ trọng số riêng. Bốn bộ trọng số, nên LSTM có gấp 4 lần trọng số so với RNN cùng kích thước, đúng như bảng so sánh lúc đầu.
+Công thức nằm dưới mỗi dòng cho bạn nào muốn đối chiếu với tài liệu. Các bạn để ý ba cổng và phần nội dung mới đều có cùng một dạng, mỗi phần có một bộ trọng số riêng. Bốn bộ trọng số, nên LSTM có gấp 4 lần trọng số so với RNN cùng kích thước, đúng như bảng so sánh lúc đầu.
 -->
 
 ---
@@ -739,14 +741,14 @@ Bây giờ mình chạy thử một ô LSTM thu nhỏ, trong đó bộ nhớ ch�
 
 Trọng số của ô này nhóm đặt sẵn, không phải học, sao cho đầu vào có ý nghĩa dễ hiểu, như ô chú thích bên phải: đầu vào bằng 2 nghĩa là "đây là thông tin quan trọng, hãy ghi nhớ", giống chữ "Pháp". Đầu vào bằng 0 là một từ bình thường. Đầu vào bằng trừ 2 nghĩa là "hết ngữ cảnh rồi, hãy xóa đi".
 
-**Demo 1, kéo thanh "Đầu vào lúc này":**
-- Đặt bằng 2: cổng ghi mở gần hết, bộ nhớ tăng lên gần 1. Dòng chữ phía dưới sơ đồ báo ô đang GHI.
-- Đặt bằng trừ 2: cổng quên đóng về gần 0, bộ nhớ bị XÓA.
+**Demo 1, kéo thanh "Đầu vào" (chưa bấm chạy, sơ đồ cập nhật ngay):**
+- Đặt bằng 2: cổng ghi mở gần hết, bộ nhớ tăng lên gần 1. Dòng chữ phía dưới sơ đồ báo ô sẽ GHI.
+- Đặt bằng trừ 2: cổng quên đóng về gần 0 nên bộ nhớ cũ bị XÓA, đồng thời cổng ghi cũng đóng nên không có gì mới được ghi vào. Kết quả là bộ nhớ mới về gần 0.
 
-**Demo 2, bấm "Làm lại" rồi bấm "Bước tiếp" liên tục.** Chuỗi chạy thử là: một từ quan trọng, ba từ bình thường, một tín hiệu xóa, rồi một từ bình thường.
+**Demo 2, bấm "Làm lại" rồi bấm "Chạy bước" liên tục.** Chuỗi mẫu là: một từ quan trọng, ba từ bình thường, một tín hiệu xóa, rồi một từ bình thường. Sau mỗi lần bấm, thanh đầu vào tự đặt sẵn giá trị tiếp theo của chuỗi mẫu; nếu muốn thử khác thì kéo thanh trước khi bấm, mô phỏng sẽ dùng đúng giá trị mình chọn.
 - Bước 1, từ quan trọng: bộ nhớ lên khoảng 0.99, mạng ghi nhớ.
-- Bước 2 đến 4, từ bình thường: cổng ghi gần như đóng nên không ghi gì mới, cổng quên mở khoảng 96% nên bộ nhớ chỉ giảm rất chậm: 0.98, 0.97, 0.95. Các bạn nhìn cột "bộ nhớ" trong bảng bên phải: thông tin được GIỮ.
-- Bước 5, tín hiệu xóa: cổng quên đóng, bộ nhớ rơi về gần 0. Mạng XÓA thông tin.
+- Bước 2 đến 4, từ bình thường: cổng ghi gần như đóng nên không ghi gì mới, cổng quên mở khoảng 96% nên bộ nhớ chỉ giảm rất chậm: 0.96, 0.93, 0.89. Các bạn nhìn cột "bộ nhớ" trong bảng bên phải: thông tin được GIỮ.
+- Bước 5, tín hiệu xóa: cổng quên đóng nên bộ nhớ cũ bị xóa, cổng ghi cũng đóng nên không ghi gì mới. Bộ nhớ rơi về gần 0: mạng đã XÓA thông tin "từ quan trọng" lúc trước.
 
 **Demo 3, tích ô "Tự chỉnh các cổng bằng tay":** kéo cổng quên lên 1, cổng ghi về 0. Khi đó bộ nhớ mới bằng đúng bộ nhớ cũ, không mất gì cả. Đây chính là ô nhớ giữ nguyên của Hochreiter năm 1997.
 
@@ -772,7 +774,7 @@ Trong mạng thật, các trọng số này không do mình đặt mà được 
 <!--
 **[Người 2 · ~1 phút]**
 
-Quay lại câu ví dụ ở đầu bài. Bảng này cho thấy ba cổng mở hay đóng ở từng từ, theo cách mà ta mong một mô hình đã học tốt sẽ làm. Màu càng đậm thì cổng càng mở. Lưu ý đây là số liệu minh họa để giải thích ý tưởng, không phải số đo từ một mô hình thật.
+Quay lại câu ví dụ ở đầu bài. Giả sử LSTM đã học tốt, thì khi đọc câu này, ở mỗi từ ba cổng sẽ mở hay đóng như trong bảng. Màu càng đậm thì cổng càng mở. Các con số ở đây do nhóm tự đặt để minh họa ý tưởng, không phải đo từ một mô hình thật.
 
 [click] Tại chữ "Pháp", cổng ghi mở để ghi thông tin vào bộ nhớ.
 
@@ -780,7 +782,7 @@ Quay lại câu ví dụ ở đầu bài. Bảng này cho thấy ba cổng mở 
 
 [click] Tại chữ "tiếng", cổng đọc mở để lấy chữ "Pháp" ra và đoán từ tiếp theo.
 
-Đến đây là toàn bộ cách một ô LSTM hoạt động khi đọc câu. Câu hỏi còn lại là: vì sao cái phép cộng đơn giản kia lại giúp LSTM học được những gì ở xa? Mời bạn Hiếu.
+Đến đây là toàn bộ cách một ô LSTM hoạt động khi đọc câu. Câu hỏi còn lại là: vì sao phép cộng đơn giản này lại giúp LSTM học được những gì ở xa? Mời bạn Hiếu.
 -->
 
 ---
@@ -860,13 +862,13 @@ Kéo cổng quên lên đúng 1 thì đường xanh nằm ngang: tín hiệu kh�
 
 ---
 
-# Ý tưởng quen thuộc: giống "lối tắt" trong ResNet
+# Về sau, ResNet cũng dùng lại ý tưởng này
 
 <div class="grid grid-cols-2 gap-6 mt-4">
 <div class="p-4 rounded bg-amber-50">
 
 ### ResNet (2015)
-*Residual Network* – mạng có lối tắt, học được hơn 100 lớp
+*Residual Network* – mạng nhận dạng ảnh có lối tắt, sâu hơn 100 lớp
 
 <div class="text-center my-2">đầu ra = <b>đầu vào</b> + phần thay đổi</div>
 
@@ -898,15 +900,15 @@ Lối tắt nối **bước này sang bước sau** (theo thời gian); khi cổ
 
 <div v-click class="mt-4 text-center">
 Cùng một nguyên lý: <b>phép cộng</b> tạo một lối tắt để tín hiệu lỗi đi thẳng, không bị nhân qua trọng số.<br>
-<span class="text-sm opacity-80">LSTM có ý tưởng này trước ResNet 18 năm; Highway Network (2015), tiền thân của ResNet, cũng do nhóm Schmidhuber đề xuất.</span>
+<span class="text-sm opacity-80">LSTM (1997) có ý tưởng này trước ResNet (2015) tận 18 năm.</span>
 </div>
 
 <!--
 **[Người 3 · ~1.5 phút]**
 
-Ý tưởng này các bạn thật ra đã gặp ở phần mạng tích chập, trong ResNet, viết tắt của Residual Network.
+Ý tưởng "giữ nguyên rồi cộng thêm" này hay đến mức về sau được dùng lại ở chỗ khác. Ví dụ nổi tiếng nhất là ResNet, viết tắt của Residual Network. Lớp mình chưa học mô hình này nên mình chỉ nói ý chính: ResNet là một mạng nhận dạng ảnh ra đời năm 2015. Trước đó, mạng càng nhiều lớp thì càng khó huấn luyện, cũng vì tín hiệu lỗi yếu dần khi đi ngược qua từng lớp, giống hệt vấn đề của RNN.
 
-Bên trái là ResNet. Mỗi khối tính đầu ra bằng đầu vào cộng với một phần thay đổi. Nhờ phép cộng đó, tín hiệu lỗi luôn có một lối tắt đi thẳng qua khối mà không bị nhân với trọng số. Đó là lý do ResNet huấn luyện được mạng hơn 100 lớp.
+Bên trái là cách ResNet giải quyết. Mỗi khối tính đầu ra bằng đầu vào cộng với một phần thay đổi. Nhờ phép cộng đó, tín hiệu lỗi luôn có một lối tắt đi thẳng qua khối mà không bị nhân với trọng số. Nhờ vậy ResNet huấn luyện được mạng hơn 100 lớp.
 
 Bên phải là LSTM: bộ nhớ mới bằng cổng quên nhân bộ nhớ cũ, cộng phần mới. Khi cổng quên bằng 1, nó giống hệt lối tắt của ResNet.
 
@@ -917,11 +919,11 @@ Lý thuyết là vậy. Bây giờ mình kiểm tra trên dữ liệu thật.
 
 ---
 
-# Thí nghiệm 1: đơn hàng online, chuỗi ngắn (8 bước)
+# Thí nghiệm 1: đơn hàng, chuỗi ngắn (8 bước)
 
 <div class="small mb-1">
 
-**Dữ liệu:** 407 nghìn đơn hàng của một sàn thương mại điện tử ở Pakistan (2016–2018) · **Bài toán:** khi khách đặt đơn, đoán đơn sẽ được **giao xong / bị hủy / bị trả lại**, dựa trên **8 đơn gần nhất** của khách · học trên đơn đến hết 2017, kiểm tra trên đơn 04–08/2018
+**Dữ liệu (từ bài A6):** 407 nghìn đơn hàng của một sàn thương mại điện tử ở Pakistan (2016–2018) · **Bài toán:** khi khách đặt đơn, đoán đơn sẽ được **giao xong / bị hủy / bị trả lại**, dựa trên **8 đơn gần nhất** của khách · học trên đơn đến hết 2017, kiểm tra trên đơn 04–08/2018
 
 </div>
 
@@ -956,7 +958,9 @@ Lý thuyết là vậy. Bây giờ mình kiểm tra trên dữ liệu thật.
 
 Nhóm so sánh LSTM với RNN trên ba thí nghiệm, xếp theo độ dài chuỗi tăng dần: 8 bước, 60 bước, rồi 100 bước. Ở mọi thí nghiệm, hai mô hình giống hệt nhau về kích thước và cách huấn luyện; điểm khác duy nhất là thay RNN bằng LSTM. Mỗi mô hình được huấn luyện 5 lần với khởi tạo ngẫu nhiên khác nhau, để chắc chắn kết quả không phải do may rủi.
 
-Thí nghiệm thứ nhất dùng dữ liệu của một sàn thương mại điện tử ở Pakistan, khoảng 400 nghìn đơn hàng. Khi khách đặt một đơn, mô hình đoán đơn đó sẽ được giao xong, bị hủy, hay bị trả lại, dựa trên 8 đơn gần nhất của khách đó.
+Hai thí nghiệm đầu dùng lại đúng hai bộ dữ liệu của bài A6 đã làm. Mô hình RNN ở đây cũng chính là mô hình RNN của bài A6; nhóm chỉ thay RNN bằng LSTM rồi so sánh.
+
+Thí nghiệm thứ nhất dùng bộ dữ liệu đơn hàng của bài A6: khoảng 400 nghìn đơn hàng của một sàn thương mại điện tử ở Pakistan. Khi khách đặt một đơn, mô hình đoán đơn đó sẽ được giao xong, bị hủy, hay bị trả lại, dựa trên 8 đơn gần nhất của khách đó.
 
 Kết quả: LSTM đoán đúng nhiều hơn, và ROC-AUC cao hơn. ROC-AUC là chỉ số đo khả năng xếp đúng loại đơn lên trước, 0.5 là đoán mò, 1 là hoàn hảo. LSTM hơn ở cả 5 lần chạy. Nhưng mức chênh rất nhỏ: chỉ khoảng 0.3 phần trăm. Và ở hai chỉ số liên quan tới đơn bị trả lại, LSTM còn kém hơn một chút.
 
@@ -971,7 +975,7 @@ Vậy nếu chuỗi dài hơn thì sao? Đó là thí nghiệm thứ hai.
 
 <div class="small mb-2">
 
-**Dữ liệu:** giá theo ngày của Apple, Microsoft, HP · **Bài toán:** dự báo **ngày mai giá dao động mạnh hay nhẹ** (khoảng cách giữa giá cao nhất và thấp nhất trong ngày) từ **60 ngày giao dịch** trước đó · học trên 1995–2016, kiểm tra trên 2020–2025 · cách so sánh giống thí nghiệm 1
+**Dữ liệu (từ bài A6):** giá theo ngày của Apple, Microsoft, HP · **Bài toán:** dự báo **ngày mai giá dao động mạnh hay nhẹ** (khoảng cách giữa giá cao nhất và thấp nhất trong ngày) từ **60 ngày giao dịch** trước đó · học trên 1995–2016, kiểm tra trên 2020–2025 · cách so sánh giống thí nghiệm 1
 
 </div>
 
@@ -1006,7 +1010,7 @@ Vậy nếu chuỗi dài hơn thì sao? Đó là thí nghiệm thứ hai.
 <!--
 **[Người 3 · ~2 phút]**
 
-Thí nghiệm thứ hai dùng giá cổ phiếu theo ngày của Apple, Microsoft và HP. Mô hình nhìn 60 ngày giao dịch gần nhất và dự báo ngày mai giá sẽ dao động mạnh hay nhẹ, tức khoảng cách giữa giá cao nhất và thấp nhất trong ngày. Nhóm chọn bài toán này vì độ dao động có tính "nhớ": giai đoạn sôi động thường kéo dài nhiều tuần. Mô hình học trên dữ liệu từ 1995 đến 2016, và được kiểm tra trên 6 năm từ 2020 đến 2025.
+Thí nghiệm thứ hai là bộ dữ liệu cổ phiếu của bài A6: giá cổ phiếu theo ngày của Apple, Microsoft và HP. Mô hình nhìn 60 ngày giao dịch gần nhất và dự báo ngày mai giá sẽ dao động mạnh hay nhẹ, tức khoảng cách giữa giá cao nhất và thấp nhất trong ngày. Nhóm chọn bài toán này vì độ dao động có tính "nhớ": giai đoạn sôi động thường kéo dài nhiều tuần. Mô hình học trên dữ liệu từ 1995 đến 2016, và được kiểm tra trên 6 năm từ 2020 đến 2025.
 
 Bảng bên trái là trung bình 5 lần chạy. LSTM tốt hơn ở mọi chỉ số. Sai số trung bình, MAE, giảm từ 0.727 xuống 0.709. Chỉ số R², tức mô hình giải thích được bao nhiêu phần sự lên xuống, tăng từ 0.35 lên 0.38. Và LSTM đoán đúng ngày mai dao động mạnh hơn hay nhẹ hơn nhiều hơn khoảng 1 phần trăm.
 
@@ -1038,7 +1042,7 @@ Vậy vì sao LSTM tốt hơn ở đây?
 
 **(Demo: tab 2)** Nhóm thử xóa dữ liệu của các ngày cũ rồi cho dự báo lại. Với RNN, giữ 20 ngày hay 60 ngày cũng như nhau, các ngày cũ không đóng góp gì. Với LSTM thì ngược lại: nếu chỉ giữ 5 hay 10 ngày, LSTM còn sai nhiều hơn RNN, vì nó đã quen dựa vào những ngày cũ, bỏ đi thì nó mất thông tin. Từ 20 ngày trở lên thì LSTM tốt hơn RNN.
 
-**(Demo: tab 3)** Nhóm huấn luyện lại với 20, 60 và 120 ngày. RNN với 120 ngày cho kết quả y hệt 60 ngày: 60 ngày thêm vào hoàn toàn vô ích, vì tín hiệu lỗi không đi ngược xa được tới đó. Nhóm cũng phải nói thật: với dữ liệu này, cho xem 20 ngày là tốt nhất ở cả hai mô hình, vì thông tin quan trọng nhất nằm trong khoảng một tháng gần đây. Nhưng ở cả ba trường hợp, LSTM đều tốt hơn RNN.
+**(Demo: tab 3)** Nhóm huấn luyện lại với 20, 60 và 120 ngày. RNN với 120 ngày cho kết quả y hệt 60 ngày: 60 ngày thêm vào hoàn toàn vô ích, vì tín hiệu lỗi không đi ngược xa được tới đó. Một điểm cần lưu ý: với dữ liệu này, cho xem 20 ngày là tốt nhất ở cả hai mô hình, vì thông tin quan trọng nhất nằm trong khoảng một tháng gần đây. Nhưng ở cả ba trường hợp, LSTM đều tốt hơn RNN.
 
 [click] Tóm lại: RNN gặp đúng hiện tượng tín hiệu lỗi biến mất ở slide 5, còn LSTM nhờ con đường thẳng qua bộ nhớ nên vẫn nghe được tín hiệu từ những ngày xa.
 -->
@@ -1148,7 +1152,7 @@ lstm = nn.LSTM(input_size=d, hidden_size=h,
 
 output, (h_n, c_n) = lstm(x)
 # output: đầu ra từng bước của lớp trên cùng,
-#         chiều cuối = 2h vì ghép 2 chiều
+#         mỗi bước 2×h số (nối 2 chiều)
 # h_n, c_n: đầu ra và bộ nhớ ở bước cuối
 ```
 
@@ -1166,7 +1170,9 @@ Thứ hai là đọc hai chiều. Dùng hai LSTM riêng: một cái đọc câu 
 
 [click] Nhưng lưu ý: không dùng hai chiều khi phải dự đoán tương lai, ví dụ dự báo giá cổ phiếu như thí nghiệm 2. Lúc học, mô hình sẽ được nhìn trước dữ liệu tương lai, nhưng lúc dùng thật thì không có. Kết quả trong lúc học sẽ đẹp một cách ảo. Lỗi này gọi là rò rỉ dữ liệu.
 
-Bên phải là code PyTorch: chỉ cần hai tham số, số lớp và hai chiều. Dropout là tắt ngẫu nhiên 20 phần trăm kết nối giữa các lớp để chống học vẹt. Đầu ra có chiều cuối gấp đôi vì ghép hai chiều; đây là chỗ hay bị lỗi kích thước nhất khi nối với lớp phía sau.
+Bên phải là code PyTorch. Muốn có hai cách mở rộng này, chỉ cần đặt số lớp bằng 2 và bật chế độ hai chiều. Thêm một tham số nữa là dropout, giúp mô hình đỡ học vẹt: trong lúc học, mỗi lần mô hình bỏ qua ngẫu nhiên khoảng 20 phần trăm tín hiệu đi từ lớp dưới lên lớp trên, nên nó không thể chỉ dựa vào vài đường cố định.
+
+Một chỗ hay gây lỗi khi viết code: đọc hai chiều thì ở mỗi bước có hai kết quả, một của chiều xuôi, một của chiều ngược, và PyTorch nối chúng lại thành một. Nên đầu ra dài gấp đôi: nếu mỗi chiều cho 64 số thì đầu ra có 128 số. Lớp phía sau phải được khai báo nhận 128 số chứ không phải 64, nếu không chương trình sẽ báo lỗi sai kích thước.
 -->
 
 ---
@@ -1215,30 +1221,26 @@ LSTM cũng có giới hạn. Lớn nhất là phải đọc lần lượt: muố
 
 # Tổng kết
 
-<div class="grid grid-cols-3 gap-3 text-center text-sm">
-<div class="p-1 rounded bg-blue-50">
+<div class="grid grid-cols-3 gap-6 text-center mt-10">
+<div class="p-5 rounded bg-blue-50">
 
 <b>🧠 Bộ nhớ dài hạn</b> (trạng thái ô nhớ): chạy thẳng như băng chuyền, chỉ bị xóa bớt và cộng thêm
 
 </div>
-<div class="p-1 rounded bg-green-50">
+<div class="p-5 rounded bg-green-50">
 
 <b>🚪 3 cổng</b>: quên · ghi · đọc, mỗi cổng là một "cái van" mở từ 0 đến 1
 
 </div>
-<div class="p-1 rounded bg-amber-50">
+<div class="p-5 rounded bg-amber-50">
 
 <b>➕ Phép cộng</b>: tạo con đường thẳng cho tín hiệu lỗi → học được những gì ở xa; chuỗi càng dài càng hơn RNN
 
 </div>
 </div>
 
-<div class="text-base font-bold mt-3 mb-1">Câu hỏi trắc nghiệm <span class="text-xs font-normal opacity-60">(bấm vào đáp án để kiểm tra)</span></div>
-
-<QuizSet />
-
 <!--
-**[Người 4 · ~3.5 phút]**
+**[Người 4 · ~1.5 phút]**
 
 Tóm lại bài hôm nay bằng ba ý.
 
@@ -1248,15 +1250,65 @@ Hai: ba cổng quên, ghi và đọc, mỗi cổng là một cái van mở từ 
 
 Ba: nhờ phép cộng trong cách cập nhật bộ nhớ, tín hiệu lỗi có một con đường thẳng để đi ngược về quá khứ, nên LSTM học được những gì ở xa. Ba thí nghiệm của nhóm cho thấy chuỗi càng dài thì LSTM càng hơn RNN rõ.
 
-Bây giờ là bốn câu hỏi trắc nghiệm nhanh. Mời các bạn chọn đáp án, mình sẽ bấm vào đáp án được chọn: ô chuyển xanh là đúng, đỏ là sai; nếu sai thì mời bạn khác chọn lại. Khi chọn đúng, lời giải hiện ra bên dưới.
+Để kiểm tra lại, mình có bốn câu hỏi trắc nghiệm nhanh.
+-->
 
-**(Demo)** Câu 1: ba cổng của LSTM là gì? Đáp án A: cổng quên, cổng ghi, cổng đọc.
+---
 
-Câu 2: các cổng dùng hàm kích hoạt nào? Đáp án B, sigmoid, vì cần một con số từ 0 đến 1 giống độ mở của cái van.
+# Câu hỏi 1/4
 
-Câu 3: thành phần nào là bộ nhớ dài hạn? Đáp án C, trạng thái ô nhớ.
+<div class="text-sm opacity-60 mb-3">Bấm vào đáp án để kiểm tra: đúng chuyển xanh và hiện lời giải, sai chuyển đỏ</div>
 
-Câu 4: LSTM sinh ra để khắc phục vấn đề nào của RNN? Đáp án A: tín hiệu lỗi yếu dần rồi biến mất.
+<QuizSet :n="1" />
+
+<!--
+**[Người 4 · ~0.5 phút]**
+
+Mời các bạn chọn đáp án, mình sẽ bấm vào đáp án được chọn: ô chuyển xanh là đúng, đỏ là sai; nếu sai thì mời bạn khác chọn lại. Khi chọn đúng, lời giải hiện ra bên dưới.
+
+**(Demo)** Câu 1: ba cổng của LSTM là gì? Đáp án A: cổng quên, cổng ghi, cổng đọc. Các đáp án còn lại là thành phần của mô hình khác: tích chập và gộp thuộc CNN; truy vấn, khóa, giá trị thuộc Transformer.
+-->
+
+---
+
+# Câu hỏi 2/4
+
+<div class="text-sm opacity-60 mb-3">Bấm vào đáp án để kiểm tra</div>
+
+<QuizSet :n="2" />
+
+<!--
+**[Người 4 · ~0.5 phút]**
+
+**(Demo)** Câu 2: các cổng dùng hàm kích hoạt nào? Đáp án B, sigmoid, vì cổng cần một con số từ 0 đến 1, giống độ mở của cái van: 0 là đóng hẳn, 1 là mở hết.
+-->
+
+---
+
+# Câu hỏi 3/4
+
+<div class="text-sm opacity-60 mb-3">Bấm vào đáp án để kiểm tra</div>
+
+<QuizSet :n="3" />
+
+<!--
+**[Người 4 · ~0.5 phút]**
+
+**(Demo)** Câu 3: thành phần nào là bộ nhớ dài hạn của LSTM? Đáp án C, trạng thái ô nhớ. Nó chỉ bị xóa bớt và cộng thêm, không bị viết lại toàn bộ ở mỗi bước, nên giữ được thông tin lâu.
+-->
+
+---
+
+# Câu hỏi 4/4
+
+<div class="text-sm opacity-60 mb-3">Bấm vào đáp án để kiểm tra</div>
+
+<QuizSet :n="4" />
+
+<!--
+**[Người 4 · ~0.5 phút]**
+
+**(Demo)** Câu 4: LSTM sinh ra để khắc phục vấn đề nào của RNN? Đáp án A: tín hiệu lỗi yếu dần rồi biến mất, nên RNN không học được mối liên hệ giữa hai từ cách xa nhau.
 -->
 
 ---
@@ -1265,8 +1317,6 @@ class: text-center
 ---
 
 # Cảm ơn thầy và các bạn đã lắng nghe!
-
-## Hỏi đáp
 
 <div class="mt-8 text-sm opacity-70">
 Tài liệu: Hochreiter & Schmidhuber (1997) · Gers và cộng sự (2000) · Graves & Schmidhuber (2005) · Bengio và cộng sự (1994) · colah.github.io/posts/2015-08-Understanding-LSTMs

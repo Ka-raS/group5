@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import Quiz from './Quiz.vue'
 
-// Câu hỏi trắc nghiệm của slide Tổng kết: câu hỏi nhận biết, không cần tính toán (answer = chỉ số đáp án đúng, tính từ 0)
+// Câu hỏi trắc nghiệm cuối bài: câu hỏi nhận biết, không cần tính toán (answer = chỉ số đáp án đúng, tính từ 0).
+// <QuizSet :n="2" /> hiện riêng câu 2, cỡ chữ lớn (mỗi câu một slide); không truyền n thì hiện cả 4 câu.
+const props = defineProps<{ n?: number }>()
 const questions = [
   {
     q: 'Đâu là ba cổng của LSTM?',
@@ -28,14 +31,22 @@ const questions = [
     explain: 'Khi học, tín hiệu lỗi của RNN yếu dần sau mỗi bước đi ngược, nên RNN không học được mối liên hệ giữa hai từ cách xa nhau.',
   },
 ]
+const shown = computed(() => (props.n ? [{ ...questions[props.n - 1], k: props.n }] : questions.map((x, i) => ({ ...x, k: i + 1 }))))
 </script>
 
 <template>
-  <div class="qs">
-    <Quiz v-for="(x, k) in questions" :key="k" :n="k + 1" v-bind="x" />
+  <div class="qs" :class="{ single: n }">
+    <Quiz v-for="x in shown" :key="x.k" :n="x.k" :q="x.q" :options="x.options" :answer="x.answer" :explain="x.explain" />
   </div>
 </template>
 
 <style scoped>
 .qs { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.qs.single { grid-template-columns: 1fr; }
+.qs.single :deep(.quiz) { font-size: 1.15rem; padding: 1rem 1.2rem; }
+.qs.single :deep(.q) { margin-bottom: .9rem; font-size: 1.35rem; }
+.qs.single :deep(.opts) { gap: .6rem; }
+.qs.single :deep(.opts button) { padding: .6rem .8rem; }
+.qs.single :deep(.explain) { margin-top: .9rem; }
+.qs.single :deep(.reset) { font-size: .8rem; }
 </style>

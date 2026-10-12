@@ -5,7 +5,7 @@ import LstmCell from './LstmCell.vue'
 // Một ô LSTM thu nhỏ: bộ nhớ chỉ là MỘT con số, nên tính tay được.
 // Trọng số đặt sẵn (không học) để đầu vào có ý nghĩa dễ hiểu:
 //   +2 = "thông tin quan trọng, hãy ghi nhớ"   0 = "từ bình thường"   −2 = "hết ngữ cảnh, hãy xóa"
-// cổng quên = σ(0.5h + 3x + 3)   cổng ghi = σ(0.5h + 4x − 3)   nội dung mới = tanh(0.5h + 2x)   cổng đọc = σ(0.5h + x + 1)
+// cổng quên = σ(0.5h + 3x + 3)   cổng ghi = σ(0.5h + 4x − 3)   nội dung mới = tanh(2x)  (chỉ phụ thuộc đầu vào: từ bình thường → nội dung mới = 0)   cổng đọc = σ(0.5h + x + 1)
 const sig = (z: number) => 1 / (1 + Math.exp(-z))
 
 const x = ref(2)
@@ -18,14 +18,14 @@ const oM = ref(0.8)
 
 const sequence = [2, 0, 0, 0, -2, 0]
 const meaning = (v: number) => (v >= 1 ? 'quan trọng → ghi nhớ' : v <= -1 ? 'hết ngữ cảnh → xóa' : 'từ bình thường')
-const stepIdx = ref(0)
-const history = ref<{ x: number; f: number; i: number; c: number }[]>([])
+const stepIdx = ref(0)  // số bước đã chạy
+const history = ref<{ n: number; x: number; f: number; i: number; c: number }[]>([])
 
 const r = computed(() => {
   const h0 = hPrev.value, x0 = x.value
   const f = manual.value ? fM.value : sig(0.5 * h0 + 3 * x0 + 3)
   const i = manual.value ? iM.value : sig(0.5 * h0 + 4 * x0 - 3)
-  const g = Math.tanh(0.5 * h0 + 2 * x0)
+  const g = Math.tanh(2 * x0)
   const o = manual.value ? oM.value : sig(0.5 * h0 + x0 + 1)
   const c = f * cPrev.value + i * g
   const h = o * Math.tanh(c)
@@ -37,21 +37,23 @@ const action = computed(() => {
   const { f, i } = r.value
   if (i > 0.5 && f > 0.5) return { text: 'GHI thêm thông tin mới, vẫn giữ bộ nhớ cũ', cls: 'ci' }
   if (i > 0.5) return { text: 'XÓA bộ nhớ cũ, GHI thông tin mới vào', cls: 'ci' }
-  if (f < 0.5) return { text: 'XÓA bộ nhớ', cls: 'cf' }
+  if (f < 0.5) return { text: 'XÓA bộ nhớ cũ, không ghi gì mới', cls: 'cf' }
   return { text: 'GIỮ bộ nhớ, gần như không ghi gì mới', cls: 'cs' }
 })
 
+// Hình bên trái luôn hiện bước SẮP chạy, với đầu vào đang chọn trên thanh trượt.
+// Nút "Chạy bước" chạy đúng bước đó (dùng giá trị người dùng chọn), rồi đặt sẵn
+// đầu vào của bước sau theo chuỗi mẫu (nếu chuỗi mẫu còn) – người dùng vẫn kéo đổi được.
 function step() {
-  if (stepIdx.value >= sequence.length) return
-  if (stepIdx.value > 0) { hPrev.value = r.value.h; cPrev.value = r.value.c }
-  x.value = sequence[stepIdx.value]
-  stepIdx.value++
   const s = r.value
-  history.value.push({ x: s.x, f: s.f, i: s.i, c: s.c })
+  stepIdx.value++
+  history.value.push({ n: stepIdx.value, x: s.x, f: s.f, i: s.i, c: s.c })
+  hPrev.value = s.h; cPrev.value = s.c
+  if (stepIdx.value < sequence.length) x.value = sequence[stepIdx.value]
 }
 function reset() {
   stepIdx.value = 0; history.value = []
-  x.value = 2; hPrev.value = 0; cPrev.value = 0; manual.value = false
+  x.value = sequence[0]; hPrev.value = 0; cPrev.value = 0; manual.value = false
 }
 const f2 = (n: number) => n.toFixed(2)
 const pct = (n: number) => `${Math.round(100 * n)}%`
@@ -61,7 +63,7 @@ const pct = (n: number) => `${Math.round(100 * n)}%`
   <div class="sim" data-no-nav>
     <div class="left">
       <LstmCell :values="r" />
-      <div class="act">Ở bước này ô LSTM đang: <b :class="action.cls">{{ action.text }}</b></div>
+      <div class="act">Bước {{ stepIdx + 1 }}, ô LSTM sẽ: <b :class="action.cls">{{ action.text }}</b></div>
       <div class="eqs">
         <div><b class="cf">Cổng quên</b> = {{ f2(r.f) }} → giữ lại {{ pct(r.f) }} bộ nhớ cũ</div>
         <div><b class="ci">Cổng ghi</b> = {{ f2(r.i) }} → ghi vào {{ pct(r.i) }} nội dung mới (nội dung mới = {{ f2(r.g) }})</div>
@@ -72,7 +74,7 @@ const pct = (n: number) => `${Math.round(100 * n)}%`
     <div class="right">
       <div class="hint">Ô LSTM thu nhỏ: bộ nhớ chỉ là <b>1 con số</b>. Trọng số đặt sẵn để đầu vào có nghĩa:
         <b>+2</b> = thông tin quan trọng, <b>0</b> = từ bình thường, <b>−2</b> = hết ngữ cảnh</div>
-      <label>Đầu vào lúc này = {{ f2(x) }} <span class="mean">({{ meaning(x) }})</span>
+      <label>Đầu vào ở bước {{ stepIdx + 1 }} = {{ f2(x) }} <span class="mean">({{ meaning(x) }})</span>
         <input type="range" min="-2" max="2" step="0.1" v-model.number="x"></label>
       <label>Bộ nhớ đang có = {{ f2(cPrev) }}<input type="range" min="-2" max="2" step="0.05" v-model.number="cPrev"></label>
       <label class="chk"><input type="checkbox" v-model="manual"> Tự chỉnh các cổng bằng tay</label>
@@ -82,14 +84,15 @@ const pct = (n: number) => `${Math.round(100 * n)}%`
         <label class="co">Cổng đọc = {{ f2(oM) }}<input type="range" min="0" max="1" step="0.01" v-model.number="oM"></label>
       </template>
       <div class="btns">
-        <button @click="step" :disabled="stepIdx >= sequence.length">Bước tiếp ▶ ({{ stepIdx }}/{{ sequence.length }})</button>
+        <button @click="step">Chạy bước {{ stepIdx + 1 }} ▶</button>
         <button @click="reset">Làm lại</button>
       </div>
-      <div class="seq">Chuỗi chạy thử: [{{ sequence.join(', ') }}] = ghi · 3 từ bình thường · xóa · bình thường</div>
+      <div class="seq">Chuỗi mẫu: [{{ sequence.join(', ') }}] = ghi · 3 từ bình thường · xóa · bình thường.
+        Sau mỗi bước, thanh đầu vào tự đặt sẵn giá trị tiếp theo của chuỗi mẫu; kéo thanh để thử giá trị khác.</div>
       <table v-if="history.length"><tbody>
         <tr><th>bước</th><th>đầu vào</th><th class="cf">quên</th><th class="ci">ghi</th><th class="cs">bộ nhớ</th></tr>
-        <tr v-for="(s, k) in history" :key="k">
-          <td>{{ k + 1 }}</td><td>{{ s.x }}</td><td>{{ f2(s.f) }}</td><td>{{ f2(s.i) }}</td><td><b>{{ f2(s.c) }}</b></td>
+        <tr v-for="s in history.slice(-6)" :key="s.n">
+          <td>{{ s.n }}</td><td>{{ s.x.toFixed(1) }}</td><td>{{ f2(s.f) }}</td><td>{{ f2(s.i) }}</td><td><b>{{ f2(s.c) }}</b></td>
         </tr>
       </tbody></table>
     </div>
