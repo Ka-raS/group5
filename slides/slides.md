@@ -999,90 +999,163 @@ Bên phải là LSTM: c t bằng f t nhân từng phần tử c t trừ 1 cộng
 
 ---
 
-# Thí nghiệm 1: dữ liệu e-commerce (Olist)
+# Thí nghiệm 1: e-commerce, chuỗi ngắn (8 bước)
 
 <div class="small mb-1">
 
-Dự báo số đơn hàng mỗi ngày, 15/01/2017 → 22/08/2018 (585 ngày) · đầu vào: cửa sổ 14 ngày, đầu ra: số đơn ngày kế tiếp · chia 80/20 theo thời gian · Min-Max (fit trên train) · hidden 64, batch 32, clip 1.0, early stopping theo validation
+**Dữ liệu:** Pakistan's Largest E-Commerce Dataset, 407 nghìn đơn hàng của 115 nghìn khách (07/2016 → 08/2018) · **Bài toán:** khi khách đặt đơn, dự đoán đơn sẽ **completed / canceled / refunded** từ **8 đơn gần nhất** của khách (46 đặc trưng mỗi đơn) · train: đến hết 2017, validation: quý 1/2018, test: 04 → 08/2018
 
 </div>
 
-<div class="ecom">
+<div class="p-1 px-2 rounded bg-slate-100 small mb-2">
 
-| Mô hình | Huấn luyện | Tham số | RMSE ↓ | MAPE ↓ | R² ↑ |
-|---|---|---|---|---|---|
-| Naive: $\hat x_t = x_{t-1}$ | — | 0 | 49.3 | 17.6% | 0.47 |
-| RNN · NumPy (tự cài đặt) | A · 1 lần chạy | 4,289 | 42.5 | 17.5% | 0.60 |
-| RNN · Keras `SimpleRNN` | A · 1 lần chạy | 4,289 | 41.3 | 16.1% | 0.63 |
-| RNN · PyTorch `nn.RNN` | A · TB 5 seed | 4,353 | 40.8 ± 1.1 | 16.3% | 0.64 |
-| <b class="text-blue-600">LSTM · PyTorch `nn.LSTM`</b> | A · TB 5 seed | 17,217 | 51.8 ± 4.4 | 21.5% | 0.41 |
-| RNN · PyTorch `nn.RNN` | B · TB 5 seed | 4,353 | 39.6 ± 0.9 | 15.4% | 0.66 |
-| <b class="text-blue-600">LSTM · PyTorch `nn.LSTM`</b> | B · TB 5 seed | 17,217 | 40.8 ± 3.1 | 15.3% | 0.63 |
+**Giống nhau ở cả hai mô hình:** 2 lớp hồi quy (64 → 32 đơn vị) + `Linear`, Adam lr 1e-3, clip 1.0, chọn epoch theo validation loss, cùng thứ tự batch, chạy 5 seed · **chỉ khác:** `nn.RNN` ↔ `nn.LSTM`
 
 </div>
 
-<div class="text-xs opacity-70 mt-1">A: Adam lr 1e-3, tối đa 150 epoch, patience 15 (cấu hình của 3 notebook RNN) · B: lr 3e-3, tối đa 500 epoch, patience 50 (val loss thấp nhất cho cả hai mô hình) · RMSE tính trên số đơn gốc</div>
+<div class="exp">
+
+| Chỉ số trên tập test (TB 5 seed) | <span class="crnn">RNN</span> | <span class="clstm">LSTM</span> | LSTM tốt hơn RNN cùng seed |
+|---|---|---|---|
+| Accuracy ↑ | 0.6628 ± 0.0037 | **0.6659** ± 0.0047 | **5/5** |
+| ROC-AUC ↑ | 0.7939 ± 0.0035 | **0.7969** ± 0.0029 | **5/5** |
+| MCC ↑ | 0.4089 ± 0.0051 | **0.4136** ± 0.0071 | **5/5** |
+| Macro F1 ↑ | **0.5106** ± 0.0042 | 0.5083 ± 0.0047 | 1/5 |
+| Recall lớp *refunded* ↑ | **0.092** ± 0.012 | 0.081 ± 0.016 | 1/5 |
+| Log loss ↓ | 0.7537 ± 0.0179 | 0.7535 ± 0.0140 | 2/5 |
+| Tham số · thời gian mỗi epoch | 10,307 · 4.3 s | 40,931 · 8.8 s | |
+
+</div>
 
 <div v-click class="mt-2 p-2 rounded bg-amber-50 small">
 
-**Kết quả: trên chuỗi này LSTM không tốt hơn RNN** (cấu hình B: chênh lệch nằm trong dao động giữa các seed)
-- **Phụ thuộc ngắn:** thông tin dự báo nằm trong 1–2 tuần gần nhất (mức đơn hàng, chu kỳ tuần), trong phạm vi RNN cơ bản đã học được
-- **Dữ liệu nhỏ:** khoảng 410 mẫu train, LSTM có gấp 4 tham số → hội tụ chậm hơn (TB 221 so với 151 epoch); với cấu hình A, LSTM dừng khi chưa hội tụ
+**LSTM tốt hơn, nhưng rất ít** (accuracy +0.3 điểm %) và **không ở mọi chỉ số**
+- **Chuỗi ngắn:** chỉ 8 bước, thông tin chủ yếu nằm ở đơn đang đặt và vài đơn gần nhất → không có phụ thuộc xa để cell state phát huy
+- Lớp *refunded* khó với cả hai: lúc đặt hàng, đơn bị trả lại trông giống một đơn hoàn thành; cổng của LSTM không giải quyết được điều đó
 
 </div>
 
-<style>
-.ecom table { font-size: .72rem; line-height: 1.2; }
-.ecom th, .ecom td { padding: .2rem .5rem !important; }
-.ecom td:nth-child(n+3) { text-align: right; }
-.small, .small p, .small li { font-size: .78rem; line-height: 1.35; }
-.small p, .small ul { margin: .15rem 0; }
-</style>
-
 <!--
-**[Người 3 · ~3 phút]**
+**[Người 3 · ~1.5 phút]**
 
-Bây giờ là thực nghiệm. Thí nghiệm thứ nhất dùng dữ liệu thật: bộ dữ liệu đơn hàng của sàn thương mại điện tử Olist ở Brazil. Chuỗi thời gian là số đơn hàng được đặt mỗi ngày, từ tháng 1/2017 đến tháng 8/2018, tổng cộng 585 ngày. Mỗi mẫu là cửa sổ 14 ngày, mô hình dự báo số đơn của ngày kế tiếp. Dữ liệu được chia 80/20 theo thời gian và chuẩn hóa Min-Max chỉ bằng thống kê của tập train.
+Bây giờ là thực nghiệm. Nhóm so sánh LSTM với RNN trên hai bộ dữ liệu thật mà nhóm đã làm với RNN trong bài tập trước, và một bài toán tổng hợp.
 
-Ba dòng RNN đầu lấy từ ba notebook RNN nhóm đã làm trước đó: cùng một kiến trúc, một lớp 64 đơn vị ẩn và một lớp Linear, cài bằng NumPy tự viết, bằng Keras và bằng PyTorch. Cả ba đều tốt hơn baseline naive, tức dự báo bằng giá trị hôm trước: RMSE khoảng 40 đến 42 so với 49.
+Ở cả hai bộ dữ liệu, hai mô hình **giống hệt nhau**: hai lớp hồi quy 64 và 32 đơn vị, cùng optimizer, cùng learning rate, cùng gradient clipping, cùng thứ tự batch. Thứ duy nhất khác là thay `nn.RNN` bằng `nn.LSTM`. Mỗi mô hình chạy 5 seed để thấy độ dao động. Nhóm cũng kiểm tra lại: RNN với seed 42 cho đúng con số của bài tập trước.
 
-Nhóm thay `nn.RNN` bằng `nn.LSTM`, giữ nguyên mọi thứ khác. Với cấu hình A, tức đúng siêu tham số của các notebook RNN, LSTM **kém hơn** RNN: RMSE 51.8, còn kém cả baseline. Nguyên nhân là LSTM hội tụ chậm hơn: với learning rate 1e-3, có seed dừng sớm ở epoch 23, có seed chạy hết 150 epoch mà chưa hội tụ.
+Thí nghiệm thứ nhất: dữ liệu thương mại điện tử của Pakistan, khoảng 400 nghìn đơn hàng. Khi khách đặt một đơn, mô hình dự đoán đơn đó sẽ hoàn thành, bị hủy hay bị trả lại, dựa trên **8 đơn gần nhất** của khách. Dữ liệu chia theo thời gian.
 
-Để so sánh công bằng, nhóm dò learning rate và patience cho **cả hai** mô hình, chọn theo validation loss chứ không theo tập test. Cấu hình B, learning rate 3e-3 và patience 50, là tốt nhất cho cả hai. Với cấu hình B, RNN đạt RMSE 39.6, LSTM 40.8; độ lệch chuẩn giữa các seed của LSTM là 3.1, nên chênh lệch này không có ý nghĩa thống kê. Nhóm cũng thử cửa sổ 28, 56 và 112 ngày; chênh lệch RMSE giữa hai mô hình đều dưới 1.5. Điểm LSTM thể hiện tốt hơn là độ ổn định: với learning rate 1e-2, RMSE của RNN dao động mạnh giữa các seed, độ lệch chuẩn 6 đến 10, còn của LSTM chỉ khoảng 1.
+LSTM tốt hơn RNN ở accuracy, ROC-AUC và MCC, và tốt hơn ở **cả 5 seed**. Nhưng mức chênh rất nhỏ: accuracy chỉ tăng 0.3 điểm phần trăm. Ở macro F1 và recall của lớp bị trả lại, LSTM còn kém hơn một chút.
 
-[click] Vậy tại sao LSTM không tốt hơn ở đây? Thứ nhất, bài toán này **không có phụ thuộc xa**: số đơn ngày mai chủ yếu phụ thuộc vào mức đơn hàng và chu kỳ tuần trong một đến hai tuần gần nhất, nằm trong phạm vi khoảng 10 bước mà RNN cơ bản học được. Cơ chế giữ gradient qua cell state của LSTM không có tác dụng khi không cần truyền thông tin qua nhiều bước. Thứ hai, dữ liệu nhỏ, khoảng 410 mẫu huấn luyện, trong khi LSTM có gấp 4 tham số, nên cần nhiều epoch hơn để hội tụ.
+[click] Lý do là chuỗi ở đây rất ngắn, chỉ 8 bước. Thông tin quan trọng nằm ở đơn đang đặt và vài đơn gần nhất, nên không có phụ thuộc xa để cell state phát huy. Còn lớp bị trả lại thì khó với cả hai mô hình, vì lúc đặt hàng nó trông giống hệt một đơn sẽ hoàn thành.
 
-Kết luận: LSTM không phải lúc nào cũng tốt hơn RNN. Thí nghiệm tiếp theo cho thấy LSTM tốt hơn khi nào.
+Vậy nếu chuỗi dài hơn thì sao? Đó là thí nghiệm thứ hai.
 -->
 
 ---
 
-# Thí nghiệm 2: phụ thuộc xa (Adding Problem)
+# Thí nghiệm 2: cổ phiếu, chuỗi dài (60 bước)
 
-<div class="text-sm mb-2"><b>Adding Problem</b>: chuỗi độ dài T, mỗi bước gồm (số ngẫu nhiên ~ U(0, 1), cờ 0/1); đúng 2 vị trí có cờ 1, một ở nửa đầu, một ở nửa sau → dự đoán <b>tổng 2 số tại đó</b>. Cùng cấu hình: hidden size 64, Adam lr 1e-3, batch 64, 5000 bước, clip 1.0</div>
+<div class="small mb-2">
 
-<CompareChart />
+**Dữ liệu:** giá theo ngày của Apple, Microsoft, HP · **Bài toán:** dự báo **biên độ dao động ngày mai** $\ln(\text{High}/\text{Low})$ từ **60 ngày giao dịch** trước đó (9 đặc trưng mỗi ngày) · train: 1995–2016, validation: 2017–2019, test: 2020–2025 (4,467 cửa sổ) · cùng cấu hình như thí nghiệm 1, 5 seed
 
-<div v-click class="mt-2 p-2 rounded bg-blue-50 text-sm">
+</div>
 
-**Vì sao LSTM tốt hơn ở đây:** với T = 100, tín hiệu lỗi phải truyền ngược ít nhất 50 bước. RNN: gradient là tích các $\operatorname{diag}(\tanh')\,W_h$ → biến mất (slide 5), loss đứng ở mức cơ sở. LSTM: đường trực tiếp qua cell state chỉ nhân với $f_t$ (slide 19) → gradient vẫn truyền về được.
+<div class="grid grid-cols-[1.05fr_1fr] gap-4 items-start">
+<div class="exp">
+
+| Test (TB 5 seed) | <span class="crnn">RNN</span> | <span class="clstm">LSTM</span> | LSTM tốt hơn |
+|---|---|---|---|
+| MAE ↓ (điểm %) | 0.7265 | **0.7092** | **5/5** |
+| RMSE ↓ | 1.163 | **1.139** | **5/5** |
+| R² (thang log) ↑ | 0.348 | **0.377** | **5/5** |
+| Đoán đúng hướng ↑ | 69.7% | **70.8%** | **5/5** |
+| Val loss tốt nhất ↓ | 0.522 | **0.505** | **5/5** |
+| Tham số | 7,873 | 31,393 | |
+| Thời gian / epoch | 2.0 s | 2.9 s | |
+
+</div>
+<div>
+
+<SeedStrip task="stock" :metrics="['MAE', 'RMSE', 'R2 log', 'direction acc']" />
+
+</div>
+</div>
+
+<div v-click class="mt-2 p-2 rounded bg-blue-50 small">
+
+**LSTM tốt hơn RNN ở mọi chỉ số, cả 5/5 seed:** MAE giảm 2.4%; seed tệ nhất của LSTM (MAE 0.7133) vẫn tốt hơn seed tốt nhất của RNN (0.7237). LSTM cũng **ổn định hơn**: độ lệch chuẩn của R² giữa các seed là 0.001, của RNN là 0.006
 
 </div>
 
 <!--
 **[Người 3 · ~2 phút]**
 
-Thí nghiệm thứ hai được thiết kế để có phụ thuộc xa. Bài toán là Adding Problem, một bài toán chuẩn có trong bài báo năm 1997. Đầu vào là một chuỗi độ dài T; mỗi bước gồm một số ngẫu nhiên phân phối đều trong khoảng 0 đến 1 và một cờ đánh dấu. Có đúng hai vị trí được đánh dấu, và mô hình phải dự đoán tổng của hai số tại đó. Vị trí thứ nhất luôn nằm ở nửa đầu chuỗi, nên mô hình phải lưu giá trị đó qua ít nhất T/2 bước. Mô hình cơ sở luôn dự đoán hằng số 1, bằng kỳ vọng của tổng, có MSE bằng phương sai của tổng, tức 1/6 xấp xỉ 0.167; đó là đường nét đứt.
+Thí nghiệm thứ hai dùng giá cổ phiếu theo ngày của Apple, Microsoft và HP. Mô hình dự báo **biên độ dao động của ngày mai**, tức giá cao nhất chia giá thấp nhất trong ngày, từ **60 ngày giao dịch** trước đó. Nhóm chọn biên độ thay vì giá, vì biến động có tính "nhớ": ngày sôi động thường đi sau ngày sôi động, và tương quan này kéo dài nhiều tuần. Mô hình học trên dữ liệu từ 1995 đến 2016, và được đánh giá trên 6 năm từ 2020 đến 2025. Cấu hình giống hệt thí nghiệm 1.
 
-**(Bấm T = 10)** Với chuỗi ngắn, **cả hai đều học được**: loss của cả hai giảm xuống dưới đường cơ sở. Test MSE của RNN khoảng 0.0012, của LSTM là 0.0001. Giống thí nghiệm e-commerce, khi phụ thuộc ngắn thì RNN cũng giải được.
+Bảng bên trái là trung bình 5 seed. LSTM tốt hơn ở **mọi chỉ số**: sai số tuyệt đối trung bình MAE giảm từ 0.727 xuống 0.709, R² tăng từ 0.35 lên 0.38, và đoán đúng hướng biến động nhiều hơn khoảng 1 điểm phần trăm.
+
+**(Demo: bấm qua các chỉ số MAE, RMSE, R²)** Hình bên phải vẽ từng seed: mỗi chấm là một lần huấn luyện. Năm chấm xanh của LSTM và năm chấm cam của RNN **tách hẳn nhau**, không chồng lên nhau.
+
+[click] Nghĩa là LSTM tốt hơn ở cả 5 trên 5 seed. Seed tệ nhất của LSTM vẫn tốt hơn seed tốt nhất của RNN. LSTM cũng ổn định hơn: kết quả giữa các seed dao động ít hơn khoảng 6 lần. Đổi lại, LSTM có gấp 4 lần tham số và mỗi epoch chậm hơn khoảng 1.5 lần.
+
+Câu hỏi tiếp theo: vì sao LSTM tốt hơn ở đây?
+-->
+
+---
+
+# Vì sao? LSTM dùng được những ngày xa hơn
+
+<StockReach />
+
+<div v-click class="mt-2 p-2 rounded bg-blue-50 small">
+
+**RNN:** ảnh hưởng của ngày 1 lên dự báo chỉ còn ≈ $10^{-4}$ so với ngày 60, đúng hiện tượng gradient biến mất ở slide 5 → 40 ngày đầu gần như bị bỏ qua (3.7%); cửa sổ 120 ngày cho kết quả **y hệt** cửa sổ 60 ngày. **LSTM:** đường qua cell state (slide 19) giữ tín hiệu lớn hơn ≈ 75 lần → 25% độ nhạy đến từ 40 ngày đầu. Thông tin quan trọng nhất vẫn ở ~20 ngày gần nhất, nhưng LSTM tốt hơn RNN **ở mọi độ dài cửa sổ**
+
+</div>
+
+<!--
+**[Người 3 · ~1.5 phút]**
+
+Để trả lời, nhóm đo xem dự báo thay đổi bao nhiêu khi thay đổi dữ liệu của từng ngày trong cửa sổ, tức đạo hàm của đầu ra theo đầu vào ở từng ngày. Đạo hàm này đi ngược qua các bước thời gian, nên chính là thứ bị biến mất ở RNN.
+
+**(Demo: hình 1, độ nhạy theo ngày)** Trục tung là thang log, so với ngày gần nhất. Đường cam của RNN rơi rất nhanh: ở ngày đầu tiên của cửa sổ chỉ còn khoảng một phần mười nghìn. Đường xanh của LSTM giảm chậm hơn nhiều, ở ngày đầu vẫn còn khoảng một phần trăm, lớn hơn RNN khoảng 75 lần. Bảng bên phải: chỉ 3.7% độ nhạy của RNN đến từ 40 ngày đầu, còn ở LSTM là 25%.
+
+**(Demo: hình 2, chỉ giữ k ngày gần nhất)** Xóa dữ liệu của các ngày cũ rồi chạy lại. Với RNN, từ 20 ngày trở đi, thêm ngày cũ không làm sai số thay đổi chút nào. LSTM thì ngược lại: nếu chỉ giữ 5 hay 10 ngày, LSTM còn sai nhiều hơn RNN, vì nó đã học cách dựa vào những ngày cũ; bỏ những ngày đó đi thì nó mất thông tin. Từ 20 ngày trở lên thì LSTM tốt hơn RNN.
+
+**(Demo: hình 3, độ dài cửa sổ)** Khi huấn luyện lại với cửa sổ 120 ngày, RNN cho kết quả y hệt cửa sổ 60 ngày: 60 ngày thêm vào không truyền được gradient về. Nhóm cũng phải nói rõ: với dữ liệu này, cửa sổ 20 ngày cho kết quả tốt nhất ở cả hai mô hình, vì thông tin quan trọng nhất nằm trong khoảng một tháng gần đây. Nhưng ở cả ba độ dài, LSTM đều tốt hơn RNN.
+
+[click] Tóm lại: RNN gặp đúng hiện tượng gradient biến mất ở slide 5, còn LSTM nhờ đường truyền qua cell state ở slide 19 nên giữ được tín hiệu từ những ngày xa.
+-->
+
+---
+
+# Thí nghiệm 3: phụ thuộc rất xa (Adding Problem)
+
+<div class="text-sm mb-2"><b>Adding Problem</b>: chuỗi độ dài T, mỗi bước gồm (số ngẫu nhiên ~ U(0, 1), cờ 0/1); đúng 2 vị trí có cờ 1, một ở nửa đầu, một ở nửa sau → dự đoán <b>tổng 2 số tại đó</b>. Cùng cấu hình: hidden size 64, Adam lr 1e-3, batch 64, 5000 bước, clip 1.0</div>
+
+<CompareChart />
+
+<div v-click class="mt-2 p-2 rounded bg-blue-50 small">
+
+**Vì sao LSTM tốt hơn ở đây:** với T = 100, tín hiệu lỗi phải truyền ngược ít nhất 50 bước. RNN: gradient là tích các $\operatorname{diag}(\tanh')\,W_h$ → biến mất (slide 5), loss đứng ở mức cơ sở. LSTM: đường trực tiếp qua cell state chỉ nhân với $f_t$ (slide 19) → gradient vẫn truyền về được.
+
+**Tổng hợp 3 thí nghiệm:** chuỗi càng dài, LSTM càng hơn RNN rõ: 8 bước → hơn rất ít · 60 bước → hơn ở mọi chỉ số, 5/5 seed · 100 bước → RNN không học được, LSTM học được
+
+</div>
+
+<!--
+**[Người 3 · ~1.5 phút]**
+
+Thí nghiệm thứ ba đẩy độ dài lên mức cực đoan, và được thiết kế để có phụ thuộc xa. Bài toán là Adding Problem, một bài toán chuẩn có trong bài báo năm 1997. Đầu vào là một chuỗi độ dài T; mỗi bước gồm một số ngẫu nhiên phân phối đều trong khoảng 0 đến 1 và một cờ đánh dấu. Có đúng hai vị trí được đánh dấu, và mô hình phải dự đoán tổng của hai số tại đó. Vị trí thứ nhất luôn nằm ở nửa đầu chuỗi, nên mô hình phải lưu giá trị đó qua ít nhất T/2 bước. Mô hình cơ sở luôn dự đoán hằng số 1, bằng kỳ vọng của tổng, có MSE bằng phương sai của tổng, tức 1/6 xấp xỉ 0.167; đó là đường nét đứt.
+
+**(Bấm T = 10)** Với chuỗi ngắn, **cả hai đều học được**: loss của cả hai giảm xuống dưới đường cơ sở. Test MSE của RNN khoảng 0.0012, của LSTM là 0.0001. Giống thí nghiệm 1, khi phụ thuộc ngắn thì RNN cũng giải được.
 
 **(Bấm T = 100)** Với chuỗi dài, **loss của RNN nằm ở mức đường cơ sở** suốt 5000 bước: test MSE là 0.163, xấp xỉ 0.167 của mô hình cơ sở, nghĩa là RNN không học được phụ thuộc cần thiết. Loss của LSTM cũng nằm quanh mức cơ sở trong khoảng 2500 bước đầu, sau đó giảm nhanh và kết thúc ở test MSE 0.0033, thấp hơn RNN khoảng **50 lần**.
 
-Bảng bên phải cho thấy chi phí: LSTM có 17,473 tham số so với 4,417 của RNN, gần gấp 4, và thời gian huấn luyện lâu hơn khoảng 10–30%.
-
 [click] Lý do đúng như phần toán đã chỉ ra. Với T = 100, tín hiệu lỗi từ đầu ra phải truyền ngược ít nhất 50 bước để tới vị trí được đánh dấu đầu tiên. Ở RNN, gradient là tích của 50 ma trận đường chéo của tanh phẩy, nhân W h, nên biến mất, và loss đứng yên ở mức cơ sở. Ở LSTM, đường trực tiếp qua cell state chỉ nhân với f t; mạng học cách giữ f t gần 1 nên gradient vẫn truyền về được.
 
-Tóm lại hai thí nghiệm: LSTM tốt hơn RNN khi bài toán có phụ thuộc xa; khi phụ thuộc ngắn và dữ liệu ít, RNN cơ bản là đủ. Sang phần cuối, bạn An sẽ nói về cách dùng LSTM trong thực tế.
+Tóm lại ba thí nghiệm: **chuỗi càng dài thì LSTM càng hơn RNN rõ**. Với 8 bước, LSTM chỉ hơn rất ít. Với 60 bước, LSTM hơn ở mọi chỉ số và ở cả 5 seed. Với 100 bước, RNN không học được còn LSTM học được. Cái giá là LSTM có gấp 4 lần tham số và chạy chậm hơn. Sang phần cuối, bạn An sẽ nói về cách dùng LSTM trong thực tế.
 -->
 
 ---
@@ -1287,5 +1360,6 @@ Phần trình bày của nhóm mình đến đây là kết thúc. Cảm ơn th�
 *(Gợi ý chuẩn bị trước một số câu hỏi có thể gặp:)*
 - *Vì sao không dùng ReLU cho các cổng?* Vì cổng là hệ số nhân, cần giá trị trong (0, 1); ReLU không bị chặn trên.
 - *LSTM có loại bỏ hoàn toàn gradient biến mất không?* Không. Nó chỉ tạo một đường truyền mà mạng **có thể học** để giữ gradient; nếu f t nhỏ thì gradient vẫn suy giảm theo tích các f t.
-- *Vì sao trên dữ liệu e-commerce LSTM không tốt hơn RNN?* Bài toán chỉ cần thông tin trong 1–2 tuần gần nhất, không có phụ thuộc xa; dữ liệu nhỏ trong khi LSTM có gấp 4 tham số. Nên luôn so sánh với baseline RNN trước khi chọn LSTM.
+- *Vì sao trên dữ liệu e-commerce LSTM chỉ hơn RNN rất ít?* Chuỗi chỉ 8 đơn, thông tin chủ yếu nằm ở đơn đang đặt và vài đơn gần nhất, không có phụ thuộc xa; trong khi LSTM có gấp 4 tham số và chậm hơn 2 lần. Nên luôn so sánh với RNN trước khi chọn LSTM.
+- *Với cổ phiếu, sao không dùng cửa sổ dài hơn để LSTM thắng đậm hơn?* Nhóm đã thử 20, 60 và 120 ngày: cửa sổ 20 ngày tốt nhất cho cả hai mô hình, vì thông tin quan trọng nằm trong khoảng một tháng gần đây. LSTM tốt hơn RNN ở cả ba độ dài; còn RNN với 120 ngày cho kết quả y hệt 60 ngày.
 -->

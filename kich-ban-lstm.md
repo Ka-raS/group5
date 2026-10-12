@@ -1,6 +1,6 @@
 # Kịch bản thuyết trình LSTM (45 phút, 4 người)
 
-**Mạch chung:** Cả lớp đã học CNN và RNN. Bài này đi theo câu hỏi "RNN gặp vấn đề gì → ai đã phát hiện và sửa nó, bằng cách nào → toán chứng minh vì sao LSTM hiệu quả → LSTM trong thực tế". Như vậy LSTM xuất hiện như một lời giải, không phải một định nghĩa đọc lên cho có. Phần so sánh LSTM với RNN gồm **2 slide thí nghiệm** (dữ liệu e-commerce thật và Adding Problem). Thời gian còn lại dành cho cơ chế, lịch sử và toán của LSTM. Không trình bày GRU và Assignment 7.
+**Mạch chung:** Cả lớp đã học CNN và RNN. Bài này đi theo câu hỏi "RNN gặp vấn đề gì → ai đã phát hiện và sửa nó, bằng cách nào → toán chứng minh vì sao LSTM hiệu quả → LSTM trong thực tế". Như vậy LSTM xuất hiện như một lời giải, không phải một định nghĩa đọc lên cho có. Phần so sánh LSTM với RNN gồm **4 slide thí nghiệm** (dữ liệu e-commerce thật, dữ liệu cổ phiếu thật, và Adding Problem), xếp theo độ dài chuỗi tăng dần: 8 → 60 → 100 bước. Thời gian còn lại dành cho cơ chế, lịch sử và toán của LSTM. Không trình bày GRU và Assignment 7.
 
 Code mẫu: **PyTorch**.
 
@@ -10,9 +10,9 @@ Code mẫu: **PyTorch**.
 |---|---|---|---|---|
 | 1. Vì sao cần LSTM? + lịch sử ra đời | Người 1 · Nguyễn Phú Đại | ~10.5' | 0:00 → 10:30 | 8 |
 | 2. Bên trong một ô LSTM | Người 2 · Trần Vũ Tiến Minh | ~11' | 10:30 → 21:30 | 8 |
-| 3. Toán của LSTM + thí nghiệm so sánh với RNN | Người 3 · Trần Đình Hiếu | ~13.5' | 21:30 → 35:00 | 7 |
-| 4. Hệ quả khi cài đặt, ứng dụng, tổng kết + trắc nghiệm | Người 4 · Phạm Thanh An | ~8' | 35:00 → 43:00 | 4 |
-| Q&A | Cả nhóm | ~2' | 43:00 → 45:00 | — |
+| 3. Toán của LSTM + thí nghiệm so sánh với RNN | Người 3 · Trần Đình Hiếu | ~15' | 21:30 → 36:30 | 9 |
+| 4. Hệ quả khi cài đặt, ứng dụng, tổng kết + trắc nghiệm | Người 4 · Phạm Thanh An | ~8' | 36:30 → 44:30 | 4 |
+| Q&A | Cả nhóm | ~2' | 44:30 → 46:30 | — |
 
 ---
 
@@ -46,7 +46,7 @@ Code mẫu: **PyTorch**.
 
 ---
 
-## Phần 3 — Người 3: "Toán của LSTM: vì sao nó hiệu quả?" (~12 phút)
+## Phần 3 — Người 3: "Toán của LSTM: vì sao nó hiệu quả?" (~15 phút)
 
 | # | Slide | Nội dung chính | Animation / interaction |
 |---|---|---|---|
@@ -55,10 +55,12 @@ Code mẫu: **PyTorch**.
 | 19 | **Backward: gradient qua cell state** | **Bước 1, công thức đầy đủ:** $\frac{\partial c_t}{\partial c_{t-1}} = \underbrace{\text{diag}(f_t)}_{\text{trực tiếp}} + \underbrace{\big[\text{diag}(c_{t-1}\odot\sigma'_f)W_{fh} + \text{diag}(\tilde c_t\odot\sigma'_i)W_{ih} + \text{diag}(i_t\odot\tanh'_{\tilde c})W_{ch}\big]\cdot\text{diag}(o_{t-1}\odot\tanh'(c_{t-1}))}_{\text{gián tiếp, đi qua } h_{t-1}}$. Chỉ hiện trong khoảng 30 giây, tô màu 2 nhóm số hạng, **không giảng từng số hạng**. **Bước 2, tập trung vào đường trực tiếp:** chỉ có $f_t$, **không có $W$ nhân lặp lại, không có $\tanh'$**. Qua k bước: $\prod f_t$, và mạng **tự học** để giữ f≈1 khi cần nhớ. Các số hạng gián tiếp giống RNN nên vẫn có thể biến mất hoặc bùng nổ, nhưng chỉ cần còn đường trực tiếp là gradient vẫn đi qua được. **Bước 3, chi tiết lịch sử:** bản gốc 1997 *chủ động cắt bỏ* các số hạng gián tiếp khi tính gradient, chỉ giữ đường trực tiếp. | Bước 1: cả công thức hiện ra, 2 nhóm số hạng tô 2 màu. Bước 2: nhóm gián tiếp mờ đi, $\text{diag}(f_t)$ phóng to. Đặt cạnh công thức RNN của slide 5 |
 | 20 | Thanh trượt so sánh gradient | Cùng độ dài T: RNN cho $\gamma^T$, LSTM cho $\prod f_t$ với f≈0.99 | Dùng lại component của slide 5, thêm đường của LSTM |
 | 21 | **Nối lại kiến thức CNN** | Phép cộng trên cell state giống **skip connection của ResNet**: $x_{l+1} = x_l + F(x_l)$. Cùng một ý tưởng: tạo "đường cao tốc" cho gradient. (Highway Network năm 2015, tiền thân của ResNet, cũng do nhóm Schmidhuber đề xuất, lấy cảm hứng trực tiếp từ LSTM.) | Hình ResNet block đặt cạnh LSTM cell |
-| 22 | **★ Slide "số m" (1): RNN so với LSTM trên dữ liệu e-commerce** | Chuỗi số đơn hàng mỗi ngày của Olist, cửa sổ 14 ngày. Bảng: baseline naive, 3 RNN từ các notebook `rnn codes/` (NumPy, Keras, PyTorch) và LSTM PyTorch (`experiment/LSTM_vs_RNN.ipynb`, phần 2), 2 cấu hình huấn luyện, trung bình 5 seed. Kết luận trung thực: **LSTM không tốt hơn RNN** trên chuỗi này, vì phụ thuộc ngắn (1–2 tuần) và dữ liệu nhỏ. | Kết luận hiện theo click |
-| 23 | **★ Slide "số m" (2): Adding Problem** | Bài toán có phụ thuộc xa. T = 10 thì cả hai học được; T = 100 thì RNN đứng ở mức cơ sở, LSTM giảm loss xuống 0.0033. Giải thích bằng gradient: tích $\operatorname{diag}(\tanh')W_h$ so với $\prod f_t$. | **Toggle độ dài chuỗi** T = 10 / 100 |
+| 22 | **★ Slide "số m" (1): e-commerce, chuỗi ngắn (8 bước)** | Dữ liệu Pakistan e-commerce (`experiment/lstm_ecommerce.ipynb`): dự đoán đơn completed / canceled / refunded từ 8 đơn gần nhất. RNN và LSTM giống hệt nhau, chỉ khác `nn.RNN` ↔ `nn.LSTM`, 5 seed. LSTM tốt hơn ở accuracy, ROC-AUC, MCC (5/5 seed) nhưng rất ít (+0.3 điểm %), kém hơn ở macro F1 và recall lớp refunded. Lý do: chuỗi ngắn. | Kết luận hiện theo click |
+| 23 | **★ Slide "số m" (2): cổ phiếu, chuỗi dài (60 bước)** | Dự báo biên độ dao động ngày mai của Apple, Microsoft, HP từ 60 ngày (`experiment/lstm_stock.ipynb`). LSTM tốt hơn ở mọi chỉ số, cả 5/5 seed: MAE 0.709 so với 0.727, R² 0.377 so với 0.348. | **Chọn chỉ số** để xem từng seed (component `SeedStrip`) |
+| 24 | **★ Slide "số m" (3): vì sao LSTM tốt hơn ở cổ phiếu** | Độ nhạy của dự báo theo từng ngày: RNN ở ngày 1 chỉ còn ≈ 1e-4 so với ngày 60 (gradient biến mất), LSTM ≈ 1e-2; 40 ngày đầu chiếm 3.7% (RNN) so với 25% (LSTM). Cắt cửa sổ và đổi độ dài cửa sổ 20 / 60 / 120: RNN với 120 ngày y hệt 60 ngày; LSTM tốt hơn ở mọi độ dài. | **3 tab** (component `StockReach`) |
+| 25 | **★ Slide "số m" (4): Adding Problem** | Bài toán có phụ thuộc rất xa. T = 10 thì cả hai học được; T = 100 thì RNN đứng ở mức cơ sở, LSTM giảm loss xuống 0.0033. Giải thích bằng gradient: tích $\operatorname{diag}(\tanh')W_h$ so với $\prod f_t$. Tổng hợp: chuỗi càng dài, LSTM càng hơn RNN rõ. | **Toggle độ dài chuỗi** T = 10 / 100 |
 
-> ⚠️ Slide 22–23: **train trước bằng PyTorch và lưu kết quả ra JSON** (`slides/data/ecommerce.json`, `slides/data/compare.json`), không train trực tiếp lúc thuyết trình.
+> ⚠️ Slide 22–25: **train trước bằng PyTorch và lưu kết quả ra JSON** (`slides/data/lstm_vs_rnn.json`, `slides/data/compare.json`), không train trực tiếp lúc thuyết trình.
 
 ---
 
@@ -66,11 +68,11 @@ Code mẫu: **PyTorch**.
 
 | # | Slide | Nội dung chính | Animation / interaction |
 |---|---|---|---|
-| 24 | Hệ quả khi cài đặt | Khởi tạo **forget bias = 1** để ban đầu mô hình giữ lại cell state, gần với bản 1997. Các số hạng gián tiếp ở slide 19 vẫn có thể **bùng nổ**, nên vẫn cần gradient clipping. | Mục 2 hiện theo click |
-| 25 | Stacked và Bidirectional LSTM | Xếp chồng nhiều lớp (`num_layers`); chạy 2 chiều (`bidirectional=True`) và nối $[\overrightarrow{h}, \overleftarrow{h}]$. Bidirectional không dùng được cho dự báo tương lai. | Cảnh báo hiện theo click |
-| 26 | Ứng dụng và giới hạn | Dịch máy (seq2seq), nhận dạng giọng nói, dự báo chuỗi thời gian, sinh văn bản. Giới hạn: tính tuần tự nên không song song hóa được, dẫn tới Attention và Transformer (chỉ giới thiệu) | — |
-| 27 | Tổng kết + câu hỏi trắc nghiệm | 3 ý chính (cell state, 3 cổng, phép cộng giúp gradient đi qua) + 4 câu trắc nghiệm dễ, không tính toán (các cổng, hàm sigmoid, cell state, gradient biến mất), bấm đáp án để biết đúng/sai | Component `QuizSet`: đáp án đúng chuyển xanh và hiện lời giải, sai chuyển đỏ |
-| 28 | Q&A | ~2 phút | — |
+| 26 | Hệ quả khi cài đặt | Khởi tạo **forget bias = 1** để ban đầu mô hình giữ lại cell state, gần với bản 1997. Các số hạng gián tiếp ở slide 19 vẫn có thể **bùng nổ**, nên vẫn cần gradient clipping. | Mục 2 hiện theo click |
+| 27 | Stacked và Bidirectional LSTM | Xếp chồng nhiều lớp (`num_layers`); chạy 2 chiều (`bidirectional=True`) và nối $[\overrightarrow{h}, \overleftarrow{h}]$. Bidirectional không dùng được cho dự báo tương lai. | Cảnh báo hiện theo click |
+| 28 | Ứng dụng và giới hạn | Dịch máy (seq2seq), nhận dạng giọng nói, dự báo chuỗi thời gian, sinh văn bản. Giới hạn: tính tuần tự nên không song song hóa được, dẫn tới Attention và Transformer (chỉ giới thiệu) | — |
+| 29 | Tổng kết + câu hỏi trắc nghiệm | 3 ý chính (cell state, 3 cổng, phép cộng giúp gradient đi qua) + 4 câu trắc nghiệm dễ, không tính toán (các cổng, hàm sigmoid, cell state, gradient biến mất), bấm đáp án để biết đúng/sai | Component `QuizSet`: đáp án đúng chuyển xanh và hiện lời giải, sai chuyển đỏ |
+| 30 | Q&A | ~2 phút | — |
 
 ---
 
@@ -79,7 +81,7 @@ Code mẫu: **PyTorch**.
 - **Bàn giao giữa các người nói:** mỗi phần kết thúc bằng một câu hỏi mà phần sau trả lời (Người 1: "cấu trúc bên trong ô LSTM", Người 2: "phép cộng này có ý nghĩa gì về mặt toán?", Người 3: "trong thực tế dùng LSTM thế nào?").
 - **Sợi chỉ xuyên suốt:** ý tưởng "trọng số = 1" của Hochreiter (slide 6) → cell state (slide 9) → đường trực tiếp $\text{diag}(f_t)$ (slide 19) → ResNet (slide 21). Mỗi người nên nhắc lại ý này một lần.
 - **Script cho từng slide:** đặt trong speaker notes của Slidev (`<!-- ... -->`), khoảng 130 từ/phút, khoảng 1–1.5 phút cho mỗi slide (slide 6, 15 và 19 có thể cần 2–3 phút).
-- **Các slide khó làm nhất:** slide 5 và 20 (thanh trượt gradient, dùng chung component), slide 15 (mô phỏng 3 cổng), slide 22–23 (thí nghiệm), slide 27 (trắc nghiệm).
+- **Các slide khó làm nhất:** slide 5 và 20 (thanh trượt gradient, dùng chung component), slide 15 (mô phỏng 3 cổng), slide 22–25 (thí nghiệm), slide 29 (trắc nghiệm).
 
 ## Nguồn tham khảo cho phần lịch sử
 

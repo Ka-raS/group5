@@ -3,3 +3,13 @@
 .legend ul { margin: 0; padding-left: 1rem; }
 .legend li { margin: .1rem 0; }
 .legend .katex { font-size: 1em; }
+
+/* Các slide thí nghiệm RNN so với LSTM (slide 22–25) */
+.small, .small p, .small li { font-size: .78rem; line-height: 1.35; }
+.small p, .small ul { margin: .15rem 0; }
+.exp table { font-size: .74rem; line-height: 1.2; }
+.exp th, .exp td { padding: .2rem .55rem !important; }
+.exp td:nth-child(n+2) { text-align: right; }
+.exp td:nth-child(4) { text-align: center; }
+.crnn { color: #ea580c; }
+.clstm { color: #2563eb; }
