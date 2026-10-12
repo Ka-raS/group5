@@ -15,11 +15,11 @@ const cfg = computed(() => {
   if (view.value === 'sens') {
     const lmin = -4.5, lmax = 0
     return {
-      xlab: 'ngày trong cửa sổ (60 = hôm nay)', ylab: 'độ nhạy (so với ngày 60)',
+      xlab: 'ngày trong 60 ngày đầu vào (60 = hôm nay)', ylab: 'ảnh hưởng tới dự báo (so với hôm nay)',
       x: (v: number) => PL + ((v - 1) / 59) * (W - PL - PR),
       y: (v: number) => PT + ((lmax - Math.log10(v)) / (lmax - lmin)) * (H - PT - PB),
       xt: [1, 10, 20, 30, 40, 50, 60].map(v => [v, String(v)]),
-      yt: [1, 1e-1, 1e-2, 1e-3, 1e-4].map(v => [v, v === 1 ? '1' : `1e${Math.log10(v)}`]),
+      yt: [[1, '100%'], [1e-1, '10%'], [1e-2, '1%'], [1e-3, '0.1%'], [1e-4, '0.01%']],
       lines: Object.fromEntries(CELLS.map(c => [c, s.sensitivity_rel[c].map((v: number, i: number) => [i + 1, v])])),
       dots: {} as Record<string, number[][]>,
     }
@@ -27,7 +27,7 @@ const cfg = computed(() => {
   if (view.value === 'cut') {
     const lo = 0.70, hi = 0.88
     return {
-      xlab: 'chỉ giữ k ngày gần nhất (thang log)', ylab: 'MAE test (seed 42)',
+      xlab: 'chỉ giữ lại k ngày gần nhất, xóa các ngày cũ hơn', ylab: 'sai số trung bình (càng thấp càng tốt)',
       x: (v: number) => PL + (Math.log(v) / Math.log(60)) * (W - PL - PR),
       y: (v: number) => PT + ((hi - v) / (hi - lo)) * (H - PT - PB),
       xt: K.map(v => [v, String(v)]),
@@ -39,7 +39,7 @@ const cfg = computed(() => {
   const ws = s.window_sweep.windows as number[], lo = 0.700, hi = 0.740
   const xi = (v: number) => ws.indexOf(v)
   return {
-    xlab: 'độ dài cửa sổ (ngày giao dịch)', ylab: `MAE test (${s.window_sweep.seeds.length} seed)`,
+    xlab: 'số ngày quá khứ đưa vào mô hình', ylab: 'sai số trung bình (càng thấp càng tốt)',
     x: (v: number) => PL + 40 + (xi(v) / (ws.length - 1)) * (W - PL - PR - 80),
     y: (v: number) => PT + ((hi - v) / (hi - lo)) * (H - PT - PB),
     xt: ws.map(v => [v, String(v)]),
@@ -50,7 +50,7 @@ const cfg = computed(() => {
 })
 const path = (pts: number[][]) => pts.map((p, k) => `${k ? 'L' : 'M'}${cfg.value.x(p[0]).toFixed(1)},${cfg.value.y(p[1]).toFixed(1)}`).join('')
 const pct = (v: number) => `${(100 * v).toFixed(1)}%`
-const sci = (v: number) => v.toExponential(1)
+const pct2 = (v: number) => `${(100 * v).toPrecision(2)}%`
 const sweepMean = (c: string, i: number) => mean(s.window_sweep.mae[c][i]).toFixed(4)
 </script>
 
@@ -58,9 +58,9 @@ const sweepMean = (c: string, i: number) => mean(s.window_sweep.mae[c][i]).toFix
   <div class="sr" data-no-nav>
     <div>
       <div class="seg">
-        <button :class="{ sel: view === 'sens' }" @click="view = 'sens'">① Độ nhạy theo ngày</button>
-        <button :class="{ sel: view === 'cut' }" @click="view = 'cut'">② Chỉ giữ k ngày gần nhất</button>
-        <button :class="{ sel: view === 'window' }" @click="view = 'window'">③ Độ dài cửa sổ</button>
+        <button :class="{ sel: view === 'sens' }" @click="view = 'sens'">① Ngày nào ảnh hưởng tới dự báo?</button>
+        <button :class="{ sel: view === 'cut' }" @click="view = 'cut'">② Xóa bớt ngày cũ</button>
+        <button :class="{ sel: view === 'window' }" @click="view = 'window'">③ Cho xem 20 / 60 / 120 ngày</button>
       </div>
       <svg :viewBox="`0 0 ${W} ${H}`" class="plot">
         <g v-for="[v, l] in cfg.yt" :key="'y' + v">
@@ -86,22 +86,21 @@ const sweepMean = (c: string, i: number) => mean(s.window_sweep.mae[c][i]).toFix
     <div class="side">
       <table v-if="view === 'sens'"><tbody>
         <tr><th></th><th class="crnn">RNN</th><th class="clstm">LSTM</th></tr>
-        <tr><td>ngày 1 / ngày 60</td><td>{{ sci(s.reach.RNN['day 1 / day 60 (median)']) }}</td><td>{{ sci(s.reach.LSTM['day 1 / day 60 (median)']) }}</td></tr>
-        <tr><td>ngày 30 / ngày 60</td><td>{{ sci(s.reach.RNN['day 30 / day 60 (median)']) }}</td><td>{{ sci(s.reach.LSTM['day 30 / day 60 (median)']) }}</td></tr>
-        <tr><td>phần ở 20 ngày cuối</td><td>{{ pct(s.reach.RNN['share in last 20 days']) }}</td><td>{{ pct(s.reach.LSTM['share in last 20 days']) }}</td></tr>
-        <tr><td>phần ở 40 ngày đầu</td><td><b>{{ pct(s.reach.RNN['share in days 1-40']) }}</b></td><td><b>{{ pct(s.reach.LSTM['share in days 1-40']) }}</b></td></tr>
+        <tr><td>ảnh hưởng của ngày 1 so với hôm nay</td><td>{{ pct2(s.reach.RNN['day 1 / day 60 (median)']) }}</td><td>{{ pct2(s.reach.LSTM['day 1 / day 60 (median)']) }}</td></tr>
+        <tr><td>ảnh hưởng của ngày 30 so với hôm nay</td><td>{{ pct2(s.reach.RNN['day 30 / day 60 (median)']) }}</td><td>{{ pct2(s.reach.LSTM['day 30 / day 60 (median)']) }}</td></tr>
+        <tr><td>phần ảnh hưởng đến từ 40 ngày cũ nhất</td><td><b>{{ pct(s.reach.RNN['share in days 1-40']) }}</b></td><td><b>{{ pct(s.reach.LSTM['share in days 1-40']) }}</b></td></tr>
       </tbody></table>
       <table v-else-if="view === 'cut'"><tbody>
-        <tr><th>giữ k ngày</th><th class="crnn">RNN</th><th class="clstm">LSTM</th></tr>
-        <tr v-for="k in [5, 10, 20, 60]" :key="k"><td>k = {{ k }}</td><td>{{ s.mae_by_k.RNN[String(k)].toFixed(4) }}</td><td>{{ s.mae_by_k.LSTM[String(k)].toFixed(4) }}</td></tr>
+        <tr><th>giữ lại</th><th class="crnn">RNN</th><th class="clstm">LSTM</th></tr>
+        <tr v-for="k in [5, 10, 20, 60]" :key="k"><td>{{ k }} ngày</td><td>{{ s.mae_by_k.RNN[String(k)].toFixed(4) }}</td><td>{{ s.mae_by_k.LSTM[String(k)].toFixed(4) }}</td></tr>
       </tbody></table>
       <table v-else><tbody>
-        <tr><th>cửa sổ</th><th class="crnn">RNN</th><th class="clstm">LSTM</th></tr>
+        <tr><th>số ngày</th><th class="crnn">RNN</th><th class="clstm">LSTM</th></tr>
         <tr v-for="(w, i) in s.window_sweep.windows" :key="w"><td>{{ w }} ngày</td><td>{{ sweepMean('RNN', i) }}</td><td>{{ sweepMean('LSTM', i) }}</td></tr>
       </tbody></table>
-      <div class="hint" v-if="view === 'sens'">|∂ŷ / ∂x<sub>t</sub>| trên 512 cửa sổ test, chia cho giá trị ở ngày 60 (seed 42; tỉ số: trung vị 5 seed)</div>
-      <div class="hint" v-else-if="view === 'cut'">Các ngày cũ hơn k đặt về 0 (= trung bình train). RNN: từ k = 20 trở đi MAE không đổi. LSTM: bỏ ngày cũ thì sai số tăng mạnh → LSTM thật sự dùng các ngày đó</div>
-      <div class="hint" v-else>Cùng một tập mẫu cho cả 3 độ dài. RNN: cửa sổ 120 cho kết quả trùng với 60</div>
+      <div class="hint" v-if="view === 'sens'">Đo bằng cách: thay đổi dữ liệu của một ngày một chút, xem dự báo thay đổi bao nhiêu (đạo hàm của dự báo theo từng ngày, 512 mẫu kiểm tra)</div>
+      <div class="hint" v-else-if="view === 'cut'">Xóa dữ liệu của các ngày cũ (đặt về mức trung bình) rồi dự báo lại. RNN: giữ 20 hay 60 ngày cũng như nhau. LSTM: xóa ngày cũ thì sai nhiều hơn → LSTM thật sự dùng các ngày đó</div>
+      <div class="hint" v-else>Huấn luyện lại với 20, 60, 120 ngày (trung bình 3 lần). RNN: 120 ngày cho kết quả y hệt 60 ngày</div>
     </div>
   </div>
 </template>

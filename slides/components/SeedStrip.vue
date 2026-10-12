@@ -7,7 +7,7 @@ const props = defineProps<{ task: 'stock' | 'ecommerce', metrics: string[] }>()
 
 const LOWER = ['MAE', 'RMSE', 'log loss']
 const LABEL: Record<string, string> = {
-  'MAE': 'MAE (điểm %)', 'RMSE': 'RMSE (điểm %)', 'R2 log': 'R² (thang log)', 'direction acc': 'Đúng hướng biến động',
+  'MAE': 'Sai số trung bình (MAE)', 'RMSE': 'Sai số RMSE', 'R2 log': 'Độ giải thích R²', 'direction acc': 'Tỉ lệ đoán đúng tăng/giảm',
   'accuracy': 'Accuracy', 'ROC-AUC': 'ROC-AUC', 'MCC': 'MCC', 'macro F1': 'Macro F1', 'recall refunded': 'Recall lớp refunded', 'log loss': 'Log loss',
 }
 const CELLS = ['RNN', 'LSTM'] as const
@@ -53,9 +53,9 @@ const digits = computed(() => (range.value[1] - range.value[0] < 0.02 ? 4 : 3))
       </g>
     </svg>
     <div class="note">
-      Mỗi chấm = 1 seed, vạch = trung bình của {{ n }} seed ·
+      Mỗi chấm = 1 lần huấn luyện với khởi tạo ngẫu nhiên khác nhau (seed), vạch = trung bình {{ n }} lần ·
       RNN <b class="crnn">{{ means.RNN.toFixed(4) }}</b>, LSTM <b class="clstm">{{ means.LSTM.toFixed(4) }}</b> ·
-      LSTM tốt hơn RNN cùng seed: <b>{{ wins }}/{{ n }}</b>
+      LSTM tốt hơn RNN: <b>{{ wins }}/{{ n }} lần</b>
     </div>
   </div>
 </template>

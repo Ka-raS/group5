@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import data from '../data/compare.json'
 
-// Loss curve RNN vs LSTM trên Adding Problem (số liệu thật, sinh bởi experiment/LSTM_vs_RNN.ipynb, phần 1)
+// Đường sai số khi huấn luyện RNN và LSTM trên bài toán cộng (Adding Problem); số liệu thật, sinh bởi experiment/LSTM_vs_RNN.ipynb cũ (commit 3702c9f)
 const T = ref('100')
 const showRnn = ref(true)
 const showLstm = ref(true)
@@ -27,22 +27,22 @@ const xticks = computed(() => [0, 1, 2, 3, 4].map(k => Math.round((steps * k) / 
         <text :x="PL - 6" :y="ys(t) + 4" class="tick" text-anchor="end">{{ t.toFixed(2) }}</text>
       </g>
       <text v-for="s in xticks" :key="s" :x="xs(s)" :y="H - PB + 16" class="tick" text-anchor="middle">{{ s }}</text>
-      <text :x="(PL + W) / 2" :y="H - 2" class="tick" text-anchor="middle">bước huấn luyện</text>
-      <text :x="PL" :y="PT - 10" class="tick" text-anchor="middle">MSE</text>
+      <text :x="(PL + W) / 2" :y="H - 2" class="tick" text-anchor="middle">số lần cập nhật trọng số khi huấn luyện</text>
+      <text :x="PL" :y="PT - 10" class="tick" text-anchor="middle">sai số</text>
       <line :x1="PL" :x2="W - PR" :y1="ys(baseline)" :y2="ys(baseline)" class="base" />
-      <text :x="W - PR - 4" :y="ys(0.2) - 4" class="tick" text-anchor="end">cơ sở (dự đoán hằng 1) ≈ 0.167</text>
+      <text :x="W - PR - 4" :y="ys(0.2) - 4" class="tick" text-anchor="end">mức "đoán mò" (luôn đoán tổng = 1) ≈ 0.167</text>
       <path v-if="showRnn" :d="path(run.rnn.curve)" class="rnn" />
       <path v-if="showLstm" :d="path(run.lstm.curve)" class="lstm" />
     </svg>
     <div class="ctrl">
       <div class="seg">
-        <button :class="{ sel: T === '10' }" @click="T = '10'">T = 10</button>
-        <button :class="{ sel: T === '100' }" @click="T = '100'">T = 100</button>
+        <button :class="{ sel: T === '10' }" @click="T = '10'">Chuỗi 10 số</button>
+        <button :class="{ sel: T === '100' }" @click="T = '100'">Chuỗi 100 số</button>
       </div>
       <label class="crnn"><input type="checkbox" v-model="showRnn"> RNN</label>
       <label class="clstm"><input type="checkbox" v-model="showLstm"> LSTM</label>
       <table><tbody>
-        <tr><th></th><th>Test MSE</th><th>Tham số</th><th>Thời gian</th></tr>
+        <tr><th></th><th>Sai số khi kiểm tra</th><th>Số trọng số</th><th>Thời gian</th></tr>
         <tr class="crnn"><td>RNN</td><td>{{ run.rnn.test_mse.toFixed(4) }}</td><td>{{ run.rnn.params }}</td><td>{{ run.rnn.seconds }}s</td></tr>
         <tr class="clstm"><td>LSTM</td><td>{{ run.lstm.test_mse.toFixed(4) }}</td><td>{{ run.lstm.params }}</td><td>{{ run.lstm.seconds }}s</td></tr>
       </tbody></table>

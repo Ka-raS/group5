@@ -17,6 +17,7 @@ clicks: 2
 
 # LSTM
 ## Long Short-Term Memory
+<div class="text-lg opacity-70">mạng có "trí nhớ ngắn hạn nhưng giữ được lâu"</div>
 
 <div class="mt-10 text-xl hook">
 <span>"Tôi lớn lên ở </span><span class="key" :class="{ fade: $clicks >= 2 }">Pháp</span><span>, </span>
@@ -39,59 +40,61 @@ clicks: 2
 <!--
 **[Người 1 · ~1 phút]**
 
-Xin chào thầy và các bạn. Hôm nay nhóm mình trình bày về LSTM, viết tắt của Long Short-Term Memory.
+Xin chào thầy và các bạn. Hôm nay nhóm mình trình bày về LSTM, viết tắt của Long Short-Term Memory. Dịch sát nghĩa thì hơi khó nghe, nhưng ý của cái tên là: một mạng nơ-ron có trí nhớ ngắn hạn, nhưng giữ được lâu.
 
-Trước khi vào bài, mời các bạn đọc câu này: "Tôi lớn lên ở Pháp, nên tôi nói thành thạo tiếng ___". Ai cũng điền được ngay: tiếng Pháp.
+Mở đầu bằng một trò chơi nhỏ. Các bạn đọc câu này: "Tôi lớn lên ở Pháp, nên tôi nói thành thạo tiếng gì?" Ai cũng trả lời ngay: tiếng Pháp.
 
-[click] Nếu chèn vào giữa câu khoảng 30 từ không liên quan, thì để điền được chỗ trống, mô hình phải **giữ thông tin "Pháp" qua khoảng 30 bước thời gian**.
+[click] Bây giờ mình chèn vào giữa câu một đoạn dài không liên quan: học tiểu học, chuyển nhà, chơi bóng đá… Các bạn vẫn trả lời được, vì các bạn nhớ chữ "Pháp" ở đầu câu.
 
-[click] Với RNN cơ bản, ảnh hưởng của từ "Pháp" lên trạng thái ở cuối câu gần như bằng 0. Bài hôm nay trả lời ba câu hỏi: vì sao RNN không học được phụ thuộc xa, LSTM khắc phục bằng cơ chế nào, và vì sao về mặt toán học cơ chế đó hiệu quả.
+[click] Nhưng với một mạng nơ-ron hồi quy cơ bản, chữ "Pháp" mờ dần sau mỗi từ, giống như trên màn hình. Đến cuối câu thì mạng gần như đã quên nó. Bài hôm nay trả lời ba câu hỏi: vì sao mạng hồi quy cơ bản hay quên, LSTM nhớ lâu bằng cách nào, và trong thực tế LSTM tốt hơn bao nhiêu.
 -->
 
 ---
 layout: center
 ---
 
-# Vị trí của LSTM trong các kiến trúc mạng nơ-ron
+# LSTM nằm ở đâu trong các loại mạng nơ-ron?
 
 <svg viewBox="0 0 760 330" class="w-full fam" style="max-height: 360px">
   <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/></marker></defs>
   <g v-click="1">
     <rect x="10" y="10" width="225" height="110" rx="10" fill="#f1f5f9" stroke="#475569" stroke-width="2"/>
-    <text x="122" y="40" class="t1">MLP</text>
-    <text x="122" y="64" class="t2">Dữ liệu: vector kích thước cố định</text>
-    <text x="122" y="84" class="t2">Không chia sẻ trọng số</text>
-    <text x="122" y="106" class="t3">mạng kết nối đầy đủ (fully connected)</text>
+    <text x="122" y="34" class="t1">MLP</text>
+    <text x="122" y="51" class="t3">Multi-Layer Perceptron</text>
+    <text x="122" y="65" class="t3">(mạng nơ-ron nhiều lớp)</text>
+    <text x="122" y="88" class="t2">Dữ liệu: một vector cố định</text>
+    <text x="122" y="108" class="t2">ví dụ: một dòng trong bảng</text>
   </g>
   <g v-click="2">
     <rect x="250" y="10" width="225" height="110" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
-    <text x="362" y="40" class="t1">CNN</text>
-    <text x="362" y="64" class="t2">Dữ liệu: dạng lưới (ảnh)</text>
-    <text x="362" y="84" class="t2">Chia sẻ trọng số theo không gian</text>
-    <text x="362" y="106" class="t3">cùng một kernel tại mọi vị trí</text>
+    <text x="362" y="34" class="t1">CNN</text>
+    <text x="362" y="51" class="t3">Convolutional Neural Network</text>
+    <text x="362" y="65" class="t3">(mạng nơ-ron tích chập)</text>
+    <text x="362" y="88" class="t2">Dữ liệu: ảnh</text>
+    <text x="362" y="108" class="t2">một bộ lọc quét khắp ảnh</text>
   </g>
   <g v-click="3">
     <rect x="490" y="10" width="260" height="250" rx="12" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/>
-    <text x="620" y="38" class="t1">Họ RNN</text>
-    <text x="620" y="60" class="t2">Dữ liệu: chuỗi, độ dài thay đổi</text>
-    <text x="620" y="78" class="t2">Chia sẻ trọng số theo thời gian</text>
-    <text x="620" y="100" class="t2" font-style="italic">h<tspan dy="4" class="sub">t</tspan><tspan dy="-4"> = F(h</tspan><tspan dy="4" class="sub">t−1</tspan><tspan dy="-4">, x</tspan><tspan dy="4" class="sub">t</tspan><tspan dy="-4">)</tspan></text>
+    <text x="620" y="34" class="t1">Họ RNN</text>
+    <text x="620" y="51" class="t3">Recurrent Neural Network</text>
+    <text x="620" y="65" class="t3">(mạng nơ-ron hồi quy)</text>
+    <text x="620" y="86" class="t2">Dữ liệu: chuỗi (câu, chuỗi giá…)</text>
+    <text x="620" y="104" class="t2">đọc lần lượt từng phần tử, có bộ nhớ</text>
     <rect x="510" y="114" width="220" height="50" rx="8" fill="#ffedd5" stroke="#ea580c" stroke-width="1.5"/>
-    <text x="620" y="135" class="t4">RNN cơ bản (Elman, 1990)</text>
-    <text x="620" y="154" class="t3">F: một lớp tanh</text>
-    <text x="250" y="150" class="t2" fill="#475569">MLP, CNN, RNN: ba họ kiến trúc song song, khác nhau</text>
-    <text x="250" y="168" class="t2" fill="#475569">ở giả định về cấu trúc của dữ liệu đầu vào</text>
+    <text x="620" y="135" class="t4">RNN cơ bản (1990)</text>
+    <text x="620" y="154" class="t3">bộ nhớ bị viết lại mỗi bước</text>
+    <text x="250" y="150" class="t2" fill="#475569">Ba họ mạng song song, mỗi họ hợp với một kiểu dữ liệu</text>
   </g>
   <g v-click="4">
     <rect x="510" y="174" width="220" height="70" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
     <text x="620" y="200" class="t1" fill="#1d4ed8">LSTM (1997)</text>
-    <text x="620" y="220" class="t3">F: cell state c + 3 cổng</text>
-    <text x="620" y="236" class="t3">(forget, input, output)</text>
+    <text x="620" y="220" class="t3">thêm một bộ nhớ dài hạn</text>
+    <text x="620" y="236" class="t3">và 3 "cổng" điều khiển nó</text>
     <rect x="20" y="192" width="445" height="112" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-dasharray="5 4"/>
-    <text x="34" y="216" class="t4 l" fill="#1d4ed8">LSTM là một mô hình thuộc họ RNN:</text>
-    <text x="34" y="240" class="t2 l">• cùng phép truy hồi; F dùng chung trọng số ở mọi bước</text>
-    <text x="34" y="262" class="t2 l">• cùng huấn luyện bằng lan truyền ngược theo thời gian (BPTT)</text>
-    <text x="34" y="284" class="t2 l">• khác RNN cơ bản ở hàm F: thêm cell state c và 3 cổng</text>
+    <text x="34" y="216" class="t4 l" fill="#1d4ed8">LSTM là một thành viên của họ RNN:</text>
+    <text x="34" y="240" class="t2 l">• vẫn đọc chuỗi từng bước, dùng lại cùng trọng số ở mọi bước</text>
+    <text x="34" y="262" class="t2 l">• vẫn huấn luyện như RNN</text>
+    <text x="34" y="284" class="t2 l">• chỉ khác ở cách cập nhật bộ nhớ bên trong mỗi bước</text>
     <line x1="465" y1="230" x2="506" y2="212" stroke="#2563eb" stroke-width="2" marker-end="url(#a2)"/>
   </g>
 </svg>
@@ -99,24 +102,23 @@ layout: center
 <style>
 .fam text { text-anchor: middle; font-size: 13px; }
 .fam .t1 { font-size: 20px; font-weight: 700; }
-.fam .t3 { font-size: 12px; fill: #475569; }
+.fam .t3 { font-size: 11.5px; fill: #475569; }
 .fam .t4 { font-size: 14px; font-weight: 700; }
-.fam .sub { font-size: 9px; }
 .fam text.l { text-anchor: start; }
 </style>
 
 <!--
 **[Người 1 · ~1.5 phút]**
 
-Trước khi vào LSTM, mình xác định vị trí của nó so với các kiến trúc mà lớp đã học.
+Trước khi vào LSTM, mình đặt nó vào bức tranh chung các loại mạng nơ-ron mà lớp đã học.
 
-[click] **MLP** là mạng kết nối đầy đủ: đầu vào là một vector có kích thước cố định, mỗi trọng số gắn với một vị trí đầu vào cố định. MLP không khai thác cấu trúc không gian hay thời gian của dữ liệu.
+[click] Đầu tiên là MLP, viết tắt của Multi-Layer Perceptron, tức mạng nơ-ron nhiều lớp thông thường. Đầu vào là một vector có kích thước cố định, ví dụ một dòng dữ liệu trong bảng.
 
-[click] **CNN**, các bạn đã làm ở assignment trước, dành cho dữ liệu dạng lưới như ảnh. Cùng một kernel được áp dụng tại mọi vị trí, tức là **chia sẻ trọng số theo không gian**.
+[click] Thứ hai là CNN, mạng nơ-ron tích chập, các bạn đã làm ở bài tập trước. CNN dành cho ảnh: cùng một bộ lọc được quét qua mọi vị trí trên ảnh.
 
-[click] **RNN** dành cho dữ liệu chuỗi. Cùng một bộ trọng số được áp dụng ở mọi bước thời gian, tức là **chia sẻ trọng số theo thời gian**. Trạng thái ẩn được cập nhật theo phép truy hồi h t bằng F(h t trừ 1, x t). Lưu ý: MLP, CNN và RNN là **ba họ kiến trúc song song**, mỗi họ ứng với một giả định về cấu trúc dữ liệu; không họ nào được suy ra từ họ nào.
+[click] Thứ ba là họ RNN, mạng nơ-ron hồi quy, dành cho dữ liệu dạng chuỗi như một câu văn hay chuỗi giá cổ phiếu. RNN đọc lần lượt từng phần tử và mang theo một "bộ nhớ" từ bước này sang bước sau. Ba họ này song song với nhau, mỗi họ hợp với một kiểu dữ liệu, không họ nào sinh ra từ họ nào.
 
-[click] LSTM **không phải một họ mô hình mới, mà là một mô hình trong họ RNN**, giống RNN cơ bản. Nó dùng cùng phép truy hồi, cùng chia sẻ trọng số qua các bước, và cùng được huấn luyện bằng lan truyền ngược theo thời gian, viết tắt là BPTT. Điểm khác duy nhất là hàm F: RNN cơ bản dùng một lớp tanh, còn LSTM dùng thêm một cell state c t và ba cổng để điều khiển việc ghi, xóa và đọc cell state.
+[click] LSTM không phải một họ mới. Nó là một thành viên trong họ RNN: vẫn đọc chuỗi từng bước, vẫn dùng lại cùng một bộ trọng số ở mọi bước, vẫn huấn luyện giống RNN. Điểm khác duy nhất nằm bên trong mỗi bước: LSTM có thêm một bộ nhớ dài hạn và ba "cổng" để quyết định nhớ gì, quên gì.
 -->
 
 ---
@@ -127,19 +129,19 @@ Trước khi vào LSTM, mình xác định vị trí của nó so với các ki�
 
 | | MLP | CNN | RNN | <span class="text-blue-600">LSTM</span> |
 |---|---|---|---|---|
-| **Dữ liệu** | vector cố định | dạng lưới (ảnh) | chuỗi | chuỗi |
-| **Chia sẻ trọng số** | không | theo không gian | theo thời gian | theo thời gian |
-| **Trạng thái** | không | không | $h_t$ | $h_t$ **và** $c_t$ |
-| **Phạm vi ngữ cảnh** | toàn bộ vector | trường tiếp nhận | thực tế ~10 bước | > 1000 bước (thí nghiệm 1997) |
-| **Số tham số¹** | — | — | 29,312 | 117,248 (×4) |
-| **Ứng dụng điển hình** | dữ liệu bảng | phân loại ảnh | chuỗi ngắn | dịch máy, giọng nói, chuỗi thời gian |
+| **Dữ liệu** | một vector cố định | ảnh | chuỗi | chuỗi |
+| **Dùng lại trọng số** | không | ở mọi vị trí trên ảnh | ở mọi bước của chuỗi | ở mọi bước của chuỗi |
+| **Bộ nhớ** | không | không | một bộ nhớ, bị viết lại mỗi bước | thêm **bộ nhớ dài hạn** |
+| **Nhớ được bao xa** | — | — | thực tế khoảng 10 bước | hơn 1000 bước (thí nghiệm năm 1997) |
+| **Số trọng số¹** | — | — | 29,312 | 117,248 (gấp 4) |
+| **Dùng cho** | dữ liệu bảng | phân loại ảnh | chuỗi ngắn | dịch máy, giọng nói, chuỗi thời gian |
 
 </div>
 
-<div class="text-xs opacity-70 mt-1">¹ Một lớp, kích thước đầu vào d = 100, kích thước trạng thái ẩn h = 128, một vector bias cho mỗi phép biến đổi.</div>
+<div class="text-xs opacity-70 mt-1">¹ Một lớp, mỗi bước đầu vào có 100 số, bộ nhớ có 128 số.</div>
 
 <div v-click class="mt-4 text-center text-lg">
-LSTM giữ nguyên cơ chế truy hồi của RNN và khắc phục hạn chế chính: <b class="text-red-600">khó học phụ thuộc xa</b>.
+LSTM giữ nguyên cách làm việc của RNN, chỉ sửa điểm yếu lớn nhất: <b class="text-red-600">hay quên những gì ở xa</b>.
 </div>
 
 <style>
@@ -151,36 +153,33 @@ LSTM giữ nguyên cơ chế truy hồi của RNN và khắc phục hạn chế 
 <!--
 **[Người 1 · ~1 phút]**
 
-Bảng này tóm tắt khác biệt giữa bốn mô hình. Mình lưu ý ba dòng.
+Bảng này tóm tắt bốn loại mạng. Mình chỉ lưu ý ba dòng.
 
-Dòng **trạng thái**: MLP và CNN không có trạng thái, mỗi mẫu đầu vào được xử lý độc lập. RNN có một hidden state h t. LSTM có **hai** trạng thái: h t và cell state c t. Cell state c t là thành phần trung tâm của cả bài.
+Dòng bộ nhớ: MLP và CNN không có bộ nhớ, mỗi đầu vào được xử lý riêng. RNN có một bộ nhớ, nhưng bộ nhớ này bị viết lại ở mỗi bước. LSTM có thêm một bộ nhớ dài hạn, và đây là nhân vật chính của cả bài.
 
-Dòng **phạm vi ngữ cảnh**: trên thực tế RNN cơ bản thường chỉ học được phụ thuộc trong khoảng 10 bước. Bài báo gốc năm 1997 cho thấy LSTM học được phụ thuộc cách nhau hơn 1000 bước.
+Dòng nhớ được bao xa: trong thực tế, RNN cơ bản chỉ học được mối liên hệ trong khoảng 10 bước. Bài báo gốc năm 1997 cho thấy LSTM học được mối liên hệ cách nhau hơn 1000 bước.
 
-Dòng **số tham số**: với cùng kích thước, LSTM có gấp 4 lần số tham số của RNN. Lát nữa bạn Hiếu sẽ giải thích vì sao đúng bằng 4.
+Dòng số trọng số: với cùng kích thước, LSTM có gấp 4 lần số trọng số của RNN, vì nó có ba cổng cộng một phần tạo nội dung mới, mỗi phần cần một bộ trọng số riêng.
 
-[click] Tóm lại: LSTM giữ nguyên cơ chế truy hồi của RNN, và khắc phục hạn chế chính của RNN là khó học phụ thuộc xa.
+[click] Tóm lại: LSTM giữ nguyên cách làm việc của RNN, và sửa điểm yếu lớn nhất của RNN là hay quên những gì ở xa.
 -->
 
 ---
 
-# Ôn lại RNN
+# Ôn lại RNN: đọc từng từ, cập nhật một "bản tóm tắt"
 
-<div class="grid grid-cols-[1fr_1.15fr] gap-4 items-center">
+<div class="grid grid-cols-[1fr_1.2fr] gap-4 items-center">
 <div class="text-center text-xl">
 
 $h_t = \tanh(W_h\, h_{t-1} + W_x\, x_t + b)$
 
-$\tanh(z) = \dfrac{e^{z} - e^{-z}}{e^{z} + e^{-z}} \in (-1, 1)$
-
 </div>
 <div class="legend">
 
-- $x_t \in \mathbb{R}^d$: vector đầu vào tại bước $t$
-- $h_t \in \mathbb{R}^h$: trạng thái ẩn (hidden state) tại bước $t$, $h_0 = 0$
-- $W_h \in \mathbb{R}^{h \times h}$: ma trận trọng số trạng thái ẩn → trạng thái ẩn
-- $W_x \in \mathbb{R}^{h \times d}$: ma trận trọng số đầu vào → trạng thái ẩn
-- $b \in \mathbb{R}^h$: vector bias; $\tanh$ tính theo từng phần tử
+- $h_t$: **bản tóm tắt** những gì đã đọc đến từ thứ $t$ (gọi là trạng thái ẩn, *hidden state*)
+- $x_t$: **từ đang đọc** ở bước $t$ (đã đổi thành vector số)
+- $W_h$, $W_x$, $b$: **trọng số** mạng học được, dùng lại ở mọi bước
+- $\tanh$: hàm ép giá trị về khoảng từ −1 đến 1
 
 </div>
 </div>
@@ -191,86 +190,89 @@ $\tanh(z) = \dfrac{e^{z} - e^{-z}}{e^{z} + e^{-z}} \in (-1, 1)$
     <marker id="a4o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ea580c"/></marker>
   </defs>
   <g v-click="1">
-    <line x1="8" y1="90" x2="58" y2="90" stroke="#475569" stroke-width="2" marker-end="url(#a4)"/>
-    <text x="14" y="82" style="font-size:14px;font-style:italic">h<tspan dy="4" style="font-size:10px">0</tspan></text>
     <rect x="60" y="60" width="110" height="60" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="2"/>
-    <text x="115" y="96" text-anchor="middle" style="font-size:18px">tanh</text>
+    <text x="115" y="96" text-anchor="middle" style="font-size:16px">RNN</text>
     <line x1="115" y1="170" x2="115" y2="122" stroke="#475569" stroke-width="2" marker-end="url(#a4)"/>
-    <text x="121" y="152" fill="#475569" style="font-size:12px">W<tspan dy="4" style="font-size:9px;font-style:italic">x</tspan></text>
-    <text x="115" y="192" text-anchor="middle" style="font-size:16px;font-style:italic">x<tspan dy="4" style="font-size:11px;font-style:italic">1</tspan></text>
+    <text x="115" y="192" text-anchor="middle" style="font-size:16px;font-weight:700">"Tôi"</text>
     <line x1="115" y1="60" x2="115" y2="20" stroke="#475569" stroke-width="2" marker-end="url(#a4)"/>
-    <text x="135" y="22" style="font-size:16px;font-style:italic">h<tspan dy="4" style="font-size:11px;font-style:italic">1</tspan></text>
+    <text x="125" y="20" style="font-size:12px">tóm tắt 1</text>
     <line x1="170" y1="90" x2="238" y2="90" stroke="#ea580c" stroke-width="2.5" marker-end="url(#a4o)"/>
-    <text x="188" y="82" fill="#ea580c" style="font-size:12px">W<tspan dy="4" style="font-size:9px;font-style:italic">h</tspan></text>
   </g>
   <g v-click="2">
     <rect x="240" y="60" width="110" height="60" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="2"/>
-    <text x="295" y="96" text-anchor="middle" style="font-size:18px">tanh</text>
+    <text x="295" y="96" text-anchor="middle" style="font-size:16px">RNN</text>
     <line x1="295" y1="170" x2="295" y2="122" stroke="#475569" stroke-width="2" marker-end="url(#a4)"/>
-    <text x="301" y="152" fill="#475569" style="font-size:12px">W<tspan dy="4" style="font-size:9px;font-style:italic">x</tspan></text>
-    <text x="295" y="192" text-anchor="middle" style="font-size:16px;font-style:italic">x<tspan dy="4" style="font-size:11px;font-style:italic">2</tspan></text>
+    <text x="295" y="192" text-anchor="middle" style="font-size:16px;font-weight:700">"lớn"</text>
     <line x1="295" y1="60" x2="295" y2="20" stroke="#475569" stroke-width="2" marker-end="url(#a4)"/>
-    <text x="315" y="22" style="font-size:16px;font-style:italic">h<tspan dy="4" style="font-size:11px;font-style:italic">2</tspan></text>
+    <text x="305" y="20" style="font-size:12px">tóm tắt 2</text>
     <line x1="350" y1="90" x2="418" y2="90" stroke="#ea580c" stroke-width="2.5" marker-end="url(#a4o)"/>
-    <text x="368" y="82" fill="#ea580c" style="font-size:12px">W<tspan dy="4" style="font-size:9px;font-style:italic">h</tspan></text>
   </g>
   <g v-click="3">
     <rect x="420" y="60" width="110" height="60" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="2"/>
-    <text x="475" y="96" text-anchor="middle" style="font-size:18px">tanh</text>
+    <text x="475" y="96" text-anchor="middle" style="font-size:16px">RNN</text>
     <line x1="475" y1="170" x2="475" y2="122" stroke="#475569" stroke-width="2" marker-end="url(#a4)"/>
-    <text x="481" y="152" fill="#475569" style="font-size:12px">W<tspan dy="4" style="font-size:9px;font-style:italic">x</tspan></text>
-    <text x="475" y="192" text-anchor="middle" style="font-size:16px;font-style:italic">x<tspan dy="4" style="font-size:11px;font-style:italic">3</tspan></text>
+    <text x="475" y="192" text-anchor="middle" style="font-size:16px;font-weight:700">"lên"</text>
     <line x1="475" y1="60" x2="475" y2="20" stroke="#475569" stroke-width="2" marker-end="url(#a4)"/>
-    <text x="495" y="22" style="font-size:16px;font-style:italic">h<tspan dy="4" style="font-size:11px;font-style:italic">3</tspan></text>
+    <text x="485" y="20" style="font-size:12px">tóm tắt 3</text>
     <line x1="530" y1="90" x2="598" y2="90" stroke="#ea580c" stroke-width="2.5" marker-end="url(#a4o)"/>
-    <text x="548" y="82" fill="#ea580c" style="font-size:12px">W<tspan dy="4" style="font-size:9px;font-style:italic">h</tspan> …</text>
+    <text x="548" y="82" fill="#ea580c" style="font-size:14px">…</text>
   </g>
   <g v-click="4">
     <rect x="600" y="60" width="110" height="60" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="2"/>
-    <text x="655" y="96" text-anchor="middle" style="font-size:18px">tanh</text>
+    <text x="655" y="96" text-anchor="middle" style="font-size:16px">RNN</text>
     <line x1="655" y1="170" x2="655" y2="122" stroke="#475569" stroke-width="2" marker-end="url(#a4)"/>
-    <text x="661" y="152" fill="#475569" style="font-size:12px">W<tspan dy="4" style="font-size:9px;font-style:italic">x</tspan></text>
-    <text x="655" y="192" text-anchor="middle" style="font-size:16px;font-style:italic">x<tspan dy="4" style="font-size:11px;font-style:italic">T</tspan></text>
+    <text x="655" y="192" text-anchor="middle" style="font-size:16px;font-weight:700">"tiếng"</text>
     <line x1="655" y1="60" x2="655" y2="20" stroke="#475569" stroke-width="2" marker-end="url(#a4)"/>
-    <text x="675" y="22" style="font-size:16px;font-style:italic">h<tspan dy="4" style="font-size:11px;font-style:italic">T</tspan></text>
+    <text x="665" y="20" style="font-size:12px">→ đoán "Pháp"</text>
   </g>
 </svg>
 
 <div v-click="5" class="text-center">
 
-Cùng một bộ $W_h, W_x, b$ được dùng ở <b>mọi</b> bước → huấn luyện bằng <b>BPTT</b> (lan truyền ngược theo thời gian)
+Cùng **một** bộ trọng số dùng ở **mọi** bước · Khi học, sai số ở cuối câu được truyền ngược lại từng bước về đầu câu: **BPTT** (*Backpropagation Through Time* – lan truyền ngược theo thời gian)
 
 </div>
 
 <!--
 **[Người 1 · ~1.5 phút]**
 
-Ôn lại nhanh RNN mà các bạn đã làm. Ở mỗi bước t, trạng thái ẩn mới h t được tính từ trạng thái ẩn trước h t trừ 1 và đầu vào x t: nhân h t trừ 1 với ma trận W h, nhân x t với ma trận W x, cộng bias b, rồi áp dụng tanh cho từng phần tử. Với d là kích thước đầu vào và h là kích thước trạng thái ẩn, W h có kích thước h nhân h, W x có kích thước h nhân d. Hàm tanh đưa giá trị về khoảng (trừ 1, 1).
+Ôn lại nhanh RNN mà các bạn đã làm. Ý tưởng rất đơn giản: RNN đọc câu từng từ một, và luôn giữ một "bản tóm tắt" những gì đã đọc. Bản tóm tắt này có tên chuyên môn là trạng thái ẩn, hidden state.
 
-[click] [click] [click] [click] Khi trải mạng theo thời gian (unrolling), ta được một chuỗi các ô nối tiếp nhau. Các mũi tên ngang màu cam là phép nhân với **cùng một ma trận W h** ở mọi bước; các mũi tên dọc là phép nhân với cùng một W x.
+Ở mỗi bước, bản tóm tắt mới được tính từ hai thứ: bản tóm tắt cũ, và từ đang đọc. Cả hai được nhân với trọng số, cộng lại, rồi đưa qua hàm tanh để ép về khoảng từ trừ 1 đến 1. Công thức trên slide chỉ nói đúng điều đó.
 
-[click] Để huấn luyện, ta dùng lan truyền ngược theo thời gian (BPTT), tức là áp dụng backpropagation trên đồ thị đã trải theo thời gian. Vì W h xuất hiện ở mọi bước, gradient từ bước cuối truyền về bước đầu phải nhân qua W h nhiều lần. Đây là nguồn gốc của vấn đề ở slide tiếp theo.
+[click] Đọc chữ "Tôi", ra bản tóm tắt thứ nhất. [click] Đọc chữ "lớn", bản tóm tắt được viết lại. [click] Cứ thế tiếp tục, [click] cho tới chữ "tiếng", lúc đó mạng phải dựa vào bản tóm tắt để đoán chữ tiếp theo là "Pháp".
+
+Các bạn để ý mũi tên màu cam: thông tin từ đầu câu muốn tới cuối câu thì phải đi qua tất cả các ô, và ở mỗi ô nó lại bị trộn với từ mới rồi viết lại.
+
+[click] Một điều nữa: mọi ô dùng chung một bộ trọng số. Khi huấn luyện, sai số ở cuối câu được truyền ngược lại từng bước về đầu câu để sửa trọng số. Cách làm này gọi là BPTT, lan truyền ngược theo thời gian. Chính quãng đường đi ngược dài này gây ra vấn đề ở slide sau.
 -->
 
 ---
 
-# Vấn đề: gradient biến mất / bùng nổ
+# Vấn đề: RNN "quên" khi học
 
-<div class="text-center text-xl">
+<div class="grid grid-cols-[1.25fr_1fr] gap-6 items-center">
+<div class="text-sm">
 
-$$\frac{\partial h_T}{\partial h_k} \;=\; \prod_{t=k+1}^{T} \frac{\partial h_t}{\partial h_{t-1}} \;=\; \prod_{t=k+1}^{T} \operatorname{diag}\big(\tanh'(a_t)\big)\, W_h$$
+Mạng đoán sai ở chỗ trống → **tín hiệu lỗi** (*gradient*: cho biết cần sửa trọng số theo hướng nào) phải đi ngược từ cuối câu về tận chữ "Pháp".
 
-</div>
-
-<div class="legend text-center -mt-2 mb-1">
-
-$a_t = W_h h_{t-1} + W_x x_t + b$ (giá trị trước kích hoạt) · $\tanh'(z) = 1 - \tanh^2(z) \in (0, 1]$ · $\gamma = \lVert W_h \rVert \cdot \max \tanh'$: cận trên chuẩn của mỗi thừa số
+Mỗi lần lùi một bước, tín hiệu bị **nhân với một hệ số** (do trọng số và hàm tanh quyết định):
 
 </div>
+<div class="text-center">
 
-<div class="grid grid-cols-2 gap-4 text-center text-sm mb-1">
-<div class="text-orange-600">γ &lt; 1 ⇒ ‖tích‖ ≤ γ<sup>T−k</sup> → 0: <b>gradient biến mất</b></div>
-<div class="text-red-600">‖W<sub>h</sub>‖ &gt; 1 ⇒ tích có thể tăng theo hàm mũ: <b>gradient bùng nổ</b></div>
+<div class="text-sm">Tín hiệu còn lại sau T bước:</div>
+
+$\gamma \times \gamma \times \dots \times \gamma = \gamma^{T}$
+
+<div class="text-xs opacity-70">γ: hệ số mỗi bước · T: số bước phải đi ngược</div>
+
+</div>
+</div>
+
+<div class="grid grid-cols-2 gap-4 text-center text-sm my-1">
+<div class="text-orange-600">Hệ số &lt; 1 → tín hiệu nhỏ dần về 0: <b>gradient biến mất</b> → mạng không học được "Pháp" ↔ "tiếng"</div>
+<div class="text-red-600">Hệ số &gt; 1 → tín hiệu phình to: <b>gradient bùng nổ</b> → huấn luyện không ổn định</div>
 </div>
 
 <GradientDecay />
@@ -278,50 +280,50 @@ $a_t = W_h h_{t-1} + W_x x_t + b$ (giá trị trước kích hoạt) · $\tanh'(
 <!--
 **[Người 1 · ~2 phút]**
 
-Đây là phần toán chính của phần mở đầu. Để biết lỗi ở bước cuối T ảnh hưởng thế nào tới trạng thái ở bước k, ta tính đạo hàm partial h T trên partial h k. Theo quy tắc chuỗi, đạo hàm này là **tích** của T trừ k ma trận Jacobian partial h t trên partial h t trừ 1. Mỗi Jacobian bằng ma trận đường chéo chứa đạo hàm tanh tại a t, nhân với W h; a t là giá trị bên trong tanh.
+Đây là vấn đề chính của RNN. Khi huấn luyện, nếu mạng đoán sai ở chỗ trống, ta cần một tín hiệu lỗi đi ngược lại để sửa trọng số. Tín hiệu này có tên là gradient, các bạn hiểu đơn giản là nó cho biết cần chỉnh trọng số theo hướng nào và chỉnh bao nhiêu.
 
-Đạo hàm của tanh bằng 1 trừ tanh mũ 2, luôn nằm trong khoảng (0, 1]. Gọi ga-ma là cận trên chuẩn của mỗi thừa số, bằng chuẩn của W h nhân với giá trị lớn nhất của tanh phẩy:
-- nếu ga-ma nhỏ hơn 1, chuẩn của tích bị chặn bởi ga-ma mũ T trừ k, nên tiến về 0 theo hàm mũ: gradient biến mất;
-- nếu chuẩn của W h lớn hơn 1, tích **có thể** tăng theo hàm mũ: gradient bùng nổ. Đây là điều kiện cần, không phải điều kiện đủ.
+Muốn mạng học được rằng chữ "Pháp" quyết định chữ cuối câu, tín hiệu lỗi phải đi ngược về tận chữ "Pháp". Vấn đề là mỗi lần lùi lại một bước, tín hiệu bị nhân với một hệ số, do trọng số và hàm tanh quyết định. Đi ngược 50 bước thì bị nhân 50 lần.
 
-**(Demo)** Đồ thị dùng mô hình đơn giản hóa: mỗi thừa số có độ lớn đúng bằng ga-ma. Với ga-ma bằng 0.9 và T bằng 50 bước, ta được 0.9 mũ 50 xấp xỉ 0.005, tức là độ lớn gradient truyền từ bước 50 về bước đầu chỉ còn **0.5%**. Tăng T lên 100 thì còn khoảng 3 nhân 10 mũ trừ 5. Tăng ga-ma lên 1.1 thì đồ thị tăng theo hàm mũ: gradient bùng nổ.
+Nếu hệ số nhỏ hơn 1, tín hiệu teo dần về 0. Ta gọi là gradient biến mất. Nếu hệ số lớn hơn 1, tín hiệu phình to, gọi là gradient bùng nổ. Giống như trò chơi truyền tin qua 50 người: chỉ cần mỗi người nói nhỏ đi một chút, đến cuối hàng thì không còn nghe thấy gì.
 
-Không thể giữ ga-ma đúng bằng 1 trong suốt quá trình huấn luyện, vì W h thay đổi sau mỗi lần cập nhật và tanh phẩy thay đổi theo dữ liệu. Đó là lý do RNN không học được phụ thuộc giữa từ "Pháp" và vị trí cần dự đoán ở slide đầu.
+**(Demo)** Mình thử trên biểu đồ. Thanh trượt trên cùng là số bước cần nhớ lại, tức khoảng cách từ chữ "Pháp" tới chỗ trống, đang là 50. Thanh thứ hai là hệ số mỗi bước, đang là 0.9, tức mỗi bước tín hiệu chỉ giữ lại 90%. Nghe thì có vẻ nhiều, nhưng sau 50 bước, tín hiệu chỉ còn khoảng nửa phần trăm. Kéo số bước lên 100 thì gần như bằng 0. Còn nếu kéo hệ số lên 1.1, đường cong vọt lên trên: đó là bùng nổ.
+
+Ta không thể giữ hệ số đúng bằng 1, vì trọng số thay đổi liên tục trong quá trình học. Đó là lý do RNN không nối được chữ "Pháp" với chữ "tiếng".
 -->
 
 ---
 
-# Lịch sử: phát hiện vấn đề và đề xuất LSTM
+# Ai phát hiện ra vấn đề và sửa nó?
 
 <div class="grid grid-cols-2 gap-6 mt-2">
 <div v-click="1" class="card">
 
 ### 1991 · Sepp Hochreiter
-Sinh viên **TU München**, luận văn tốt nghiệp (diploma thesis), người hướng dẫn **Jürgen Schmidhuber**
+Sinh viên **Đại học Kỹ thuật München** (Đức), làm luận văn tốt nghiệp với thầy **Jürgen Schmidhuber**
 
-→ **Phân tích toán học đầu tiên** về hiện tượng gradient biến mất ở RNN (chính là tích Jacobian ở slide trước)
+→ Người **đầu tiên chứng minh bằng toán** vì sao RNN "quên": chính là phép nhân lặp lại ở slide trước
 
-<span class="text-sm opacity-70">(Bengio, Simard, Frasconi công bố độc lập năm 1994)</span>
+<span class="text-sm opacity-70">(Năm 1994, Bengio và cộng sự cũng độc lập tìm ra điều này)</span>
 
 </div>
 <div v-click="2" class="card">
 
-### Ý tưởng
-Gradient suy giảm vì bị **nhân lặp lại với hệ số khác 1**
+### Ý tưởng sửa
+Tín hiệu yếu dần vì bị **nhân với số khác 1** nhiều lần.
 
-→ Dùng một đơn vị nhớ $c_t$ có **liên kết tự hồi quy trọng số cố định = 1**, hàm kích hoạt **tuyến tính**
+→ Vậy làm một **ô nhớ** chỉ việc giữ nguyên giá trị cũ rồi **cộng thêm** cái mới:
 
-$$c_t = 1 \cdot c_{t-1} + (\text{đầu vào mới}) \;\Rightarrow\; \frac{\partial c_t}{\partial c_{t-1}} = 1$$
+<div class="text-center my-1">bộ nhớ mới = <b>1 ×</b> bộ nhớ cũ <b>+</b> thông tin mới</div>
 
-→ **Constant Error Carousel (CEC)**: tín hiệu lỗi truyền qua giữ nguyên độ lớn
+→ Hệ số luôn bằng 1, tín hiệu đi qua bao nhiêu bước cũng không đổi. Ông gọi là **CEC** (*Constant Error Carousel* – "băng chuyền giữ nguyên lỗi")
 
 </div>
 </div>
 
 <div v-click="3" class="card mt-3">
 
-**Vấn đề mới:** mọi đầu vào đều được cộng vào $c_t$ → thêm **cổng (gate)** nhân vào đầu vào và đầu ra của CEC để điều khiển khi nào *ghi*, khi nào *đọc*.
-**1997:** Hochreiter & Schmidhuber, *"Long Short-Term Memory"*, tạp chí **Neural Computation** (đã có technical report năm 1995).
+**Vấn đề mới:** từ nào cũng được cộng vào ô nhớ → ô nhớ bị lẫn lộn. Cách giải: thêm các **cổng**, hoạt động như **cái van** (mở từ 0 đến 1), quyết định *lúc nào được ghi* và *lúc nào được đọc*.
+**1997:** Hochreiter và Schmidhuber công bố bài báo *"Long Short-Term Memory"* trên tạp chí *Neural Computation*.
 
 </div>
 
@@ -333,13 +335,13 @@ $$c_t = 1 \cdot c_{t-1} + (\text{đầu vào mới}) \;\Rightarrow\; \frac{\part
 <!--
 **[Người 1 · ~2 phút]**
 
-Vậy ai là người đã nhìn ra vấn đề này và sửa nó?
+Vậy ai đã nhìn ra vấn đề này và sửa nó?
 
-[click] Năm 1991, Sepp Hochreiter, khi đó là **sinh viên** Đại học Kỹ thuật München, làm luận văn tốt nghiệp dưới sự hướng dẫn của Jürgen Schmidhuber. Trong luận văn này, ông đưa ra **phân tích toán học đầu tiên** giải thích vì sao RNN không học được phụ thuộc xa, chính là tích các ma trận Jacobian ở slide trước. Năm 1994, Bengio, Simard và Frasconi công bố độc lập kết quả tương tự.
+[click] Năm 1991, Sepp Hochreiter, khi đó là sinh viên Đại học Kỹ thuật München ở Đức, làm luận văn tốt nghiệp với thầy Jürgen Schmidhuber. Trong luận văn này, ông là người đầu tiên chứng minh bằng toán vì sao RNN hay quên, chính là phép nhân lặp đi lặp lại mà mình vừa demo. Ba năm sau, nhóm của Bengio cũng độc lập tìm ra kết quả tương tự.
 
-[click] Hướng khắc phục suy ra trực tiếp từ công thức: gradient suy giảm vì bị nhân lặp lại với hệ số khác 1. Vì vậy ông dùng một đơn vị có **liên kết tự hồi quy với trọng số cố định bằng 1** và hàm kích hoạt tuyến tính. Khi đó đạo hàm của c t theo c t trừ 1 đúng bằng 1, nên tín hiệu lỗi truyền qua bao nhiêu bước cũng không đổi độ lớn. Ông gọi đơn vị này là **Constant Error Carousel**, viết tắt CEC.
+[click] Cách sửa của ông rất tự nhiên. Tín hiệu yếu dần vì bị nhân với một số khác 1 nhiều lần. Vậy thì làm một ô nhớ mà ở mỗi bước, nó chỉ giữ nguyên giá trị cũ rồi cộng thêm thông tin mới. Hệ số khi đó luôn đúng bằng 1, nên tín hiệu đi qua bao nhiêu bước cũng không bị yếu đi. Ông đặt tên cho ô nhớ này là CEC, viết tắt của Constant Error Carousel, tạm hiểu là "băng chuyền giữ nguyên lỗi".
 
-[click] Cách làm này sinh ra vấn đề mới: mọi đầu vào đều được cộng trực tiếp vào c t, kể cả đầu vào không liên quan, nên nội dung đã lưu bị ghi đè. Giải pháp là thêm các **cổng**, là các hệ số nhân trong khoảng 0 đến 1, đặt ở đầu vào và đầu ra của CEC để điều khiển khi nào được ghi và khi nào được đọc. Kết quả được công bố trong bài báo "Long Short-Term Memory" năm 1997 trên tạp chí Neural Computation, một trong những bài báo được trích dẫn nhiều nhất của lĩnh vực học sâu.
+[click] Nhưng làm vậy lại sinh ra vấn đề mới: từ nào cũng được cộng vào ô nhớ, kể cả những từ không quan trọng, nên ô nhớ bị lẫn lộn. Giải pháp là thêm các cổng. Các bạn hình dung cổng như một cái van, mở từ 0 đến 1, quyết định lúc nào được ghi vào ô nhớ và lúc nào được đọc ra. Năm 1997, Hochreiter và Schmidhuber công bố bài báo "Long Short-Term Memory", và bài báo này trở thành một trong những bài được trích dẫn nhiều nhất của ngành học sâu.
 -->
 
 ---
@@ -347,22 +349,22 @@ Vậy ai là người đã nhìn ra vấn đề này và sửa nó?
 # Các mốc phát triển của LSTM
 
 <div class="timeline">
-  <div v-click class="ev"><b>1997</b><span>Bản gốc: chỉ có <b>input gate</b> và <b>output gate</b>, <span class="text-red-600">chưa có forget gate</span></span></div>
-  <div v-click class="ev"><b>1999–2000</b><span>Gers, Schmidhuber, Cummins thêm <b class="text-red-600">forget gate</b> (<i>"Learning to Forget"</i>); Gers & Schmidhuber thêm kết nối peephole</span></div>
-  <div v-click class="ev"><b>2005</b><span>Graves & Schmidhuber: huấn luyện bằng gradient BPTT đầy đủ (không cắt bớt), <b>Bidirectional LSTM</b></span></div>
+  <div v-click class="ev"><b>1997</b><span>Bản đầu tiên: có cổng ghi và cổng đọc, nhưng <span class="text-red-600">chưa có cổng quên</span> → ô nhớ chỉ cộng thêm, không xóa được</span></div>
+  <div v-click class="ev"><b>1999–2000</b><span>Felix Gers và cộng sự thêm <b class="text-red-600">cổng quên</b>: mạng tự học khi nào xóa bớt ô nhớ. LSTM dùng ngày nay là bản này</span></div>
+  <div v-click class="ev"><b>2005</b><span>Huấn luyện LSTM theo cách đầy đủ hơn; ra đời <b>LSTM hai chiều</b> (đọc câu cả xuôi lẫn ngược)</span></div>
   <div v-click class="ev"><b>2009</b><span>LSTM thắng các cuộc thi nhận dạng chữ viết tay</span></div>
-  <div v-click class="ev"><b>2014</b><span><b>seq2seq</b> (Sutskever et al.): encoder–decoder LSTM cho dịch máy</span></div>
-  <div v-click class="ev"><b>2015–2016</b><span>Nhận dạng giọng nói của Google (2015), Google Translate (GNMT, 2016) dùng LSTM</span></div>
-  <div v-click class="ev"><b>2017</b><span><b>Transformer</b> ra đời và dần thay thế LSTM trong NLP</span></div>
+  <div v-click class="ev"><b>2014</b><span><b>Dịch máy</b> bằng hai LSTM: một LSTM đọc câu nguồn, một LSTM viết câu đích (gọi là <i>seq2seq</i> – sequence to sequence, chuỗi sang chuỗi)</span></div>
+  <div v-click class="ev"><b>2015–2016</b><span>Nhận dạng giọng nói của Google và Google Dịch chuyển sang dùng LSTM</span></div>
+  <div v-click class="ev"><b>2017</b><span><b>Transformer</b> ra đời (nền tảng của ChatGPT) và dần thay thế LSTM trong xử lý ngôn ngữ</span></div>
 </div>
 
 <div v-click class="mt-4 text-center text-sm">
-Tên gọi: <i>short-term memory</i> là giá trị kích hoạt (khác với <i>long-term memory</i> là trọng số); LSTM giữ short-term memory qua <b>nhiều bước</b> → <i>Long Short-Term Memory</i>
+Ý nghĩa tên gọi: <i>short-term memory</i> (trí nhớ ngắn hạn) là những gì mạng đang giữ trong lúc đọc; LSTM giữ được trí nhớ ngắn hạn đó <b>lâu</b> (<i>long</i>) qua nhiều bước
 </div>
 
 <style>
 .timeline { border-left: 3px solid #2563eb; margin-left: 1rem; padding-left: 1rem; }
-.ev { display: grid; grid-template-columns: 7rem 1fr; gap: .5rem; padding: .25rem 0; font-size: .9rem; position: relative; }
+.ev { display: grid; grid-template-columns: 7rem 1fr; gap: .5rem; padding: .25rem 0; font-size: .88rem; position: relative; }
 .ev::before { content: ''; position: absolute; left: -1.45rem; top: .6rem; width: .7rem; height: .7rem; border-radius: 50%; background: #2563eb; }
 .ev b:first-child { color: #1d4ed8; }
 </style>
@@ -372,13 +374,13 @@ Tên gọi: <i>short-term memory</i> là giá trị kích hoạt (khác với <i
 
 Điểm qua nhanh hành trình của LSTM.
 
-[click] Bản gốc năm 1997 chỉ có hai cổng: input gate và output gate. **Chưa có forget gate**, nghĩa là cell state chỉ được cộng thêm, không có cơ chế xóa.
+[click] Bản đầu tiên năm 1997 có cổng ghi và cổng đọc, nhưng chưa có cổng quên. Nghĩa là ô nhớ chỉ được cộng thêm, không có cách nào xóa bớt.
 
-[click] Năm 1999–2000, Felix Gers, Schmidhuber và Cummins thêm **forget gate**, cho phép mạng học cách xóa nội dung trong cell state. LSTM dùng ngày nay, kể cả `nn.LSTM` trong PyTorch, là phiên bản có forget gate. Cũng năm 2000, Gers và Schmidhuber đề xuất kết nối peephole, cho các cổng đọc trực tiếp cell state; PyTorch không dùng peephole.
+[click] Năm 2000, Felix Gers và cộng sự thêm cổng quên, để mạng tự học khi nào cần xóa bớt nội dung cũ. LSTM mà các bạn dùng trong PyTorch ngày nay chính là phiên bản có cổng quên này.
 
-[click] Năm 2005, Alex Graves và Schmidhuber huấn luyện LSTM bằng gradient BPTT đầy đủ, thay vì gradient bị cắt bớt như bản 1997, và giới thiệu Bidirectional LSTM. [click] Năm 2009, LSTM thắng các cuộc thi nhận dạng chữ viết tay. [click] Năm 2014, Sutskever và cộng sự dùng hai LSTM làm encoder và decoder cho dịch máy, gọi là seq2seq. [click] Khoảng 2015–2016, nhận dạng giọng nói của Google và Google Translate chuyển sang LSTM. [click] Đến 2017, Transformer xuất hiện và dần thay thế LSTM trong xử lý ngôn ngữ.
+[click] Năm 2005, LSTM được huấn luyện theo cách đầy đủ hơn, và có thêm LSTM hai chiều, đọc câu cả xuôi lẫn ngược. [click] Năm 2009, LSTM thắng các cuộc thi nhận dạng chữ viết tay. [click] Năm 2014, người ta dùng hai LSTM để dịch máy: một LSTM đọc câu tiếng Anh, một LSTM viết ra câu tiếng Pháp. [click] Khoảng 2015, 2016, nhận dạng giọng nói của Google và Google Dịch đều chuyển sang LSTM. [click] Đến 2017, Transformer, nền tảng của ChatGPT, ra đời và dần thay thế LSTM trong xử lý ngôn ngữ.
 
-[click] Về tên gọi: trong bài báo gốc, "short-term memory" là giá trị kích hoạt của mạng, phân biệt với "long-term memory" là các trọng số được học chậm qua huấn luyện. "Long short-term memory" nghĩa là giá trị kích hoạt đó được duy trì qua nhiều bước thời gian.
+[click] Còn cái tên: trí nhớ ngắn hạn là những gì mạng đang giữ trong lúc đọc câu. LSTM là trí nhớ ngắn hạn nhưng giữ được lâu.
 -->
 
 ---
@@ -386,24 +388,25 @@ layout: center
 class: text-center
 ---
 
-# Cấu trúc bên trong một ô LSTM
+# Bên trong một ô LSTM
 
-<div class="text-xl opacity-80 mt-4">CEC (cell state) + 3 cổng: input, output (1997) và forget (bổ sung năm 2000)</div>
+<div class="text-xl opacity-80 mt-4">Một <b>ô nhớ</b> giữ thông tin lâu dài + <b>3 cổng</b>: quên · ghi · đọc</div>
 
 <!--
 **[Người 1 · ~0.5 phút]**
 
-Tóm lại, RNN không học được phụ thuộc xa vì gradient bị nhân lặp lại qua W h và tanh phẩy, và Hochreiter khắc phục bằng một đơn vị tự hồi quy có trọng số bằng 1 (CEC) kết hợp với các cổng. Tiếp theo, mời bạn Minh trình bày cấu trúc bên trong ô LSTM và cách từng cổng hoạt động.
+Tóm lại phần của mình: RNN hay quên vì tín hiệu lỗi bị nhân đi nhân lại qua rất nhiều bước. Hochreiter sửa bằng một ô nhớ chỉ giữ nguyên rồi cộng thêm, cùng với các cổng để điều khiển nó. Tiếp theo, mời bạn Minh mở ô LSTM ra xem bên trong có gì.
 -->
 
 ---
 
-# Hai trạng thái: hidden state và cell state
+
+# Hai loại bộ nhớ: trạng thái ẩn và trạng thái ô nhớ
 
 <div class="grid grid-cols-2 gap-6 items-center">
 <div class="text-center">
 
-**RNN: một trạng thái $h_t$**
+**RNN: chỉ có một bộ nhớ**
 
 <svg viewBox="0 0 260 180" style="width: 85%; margin: auto">
   <defs><marker id="a9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker></defs>
@@ -412,13 +415,13 @@ Tóm lại, RNN không học được phụ thuộc xa vì gradient bị nhân l
   <line x1="5" y1="85" x2="68" y2="85" stroke="#475569" stroke-width="2.5" marker-end="url(#a9)"/>
   <line x1="190" y1="85" x2="255" y2="85" stroke="#475569" stroke-width="2.5" marker-end="url(#a9)"/>
   <line x1="130" y1="178" x2="130" y2="132" stroke="#475569" stroke-width="2.5" marker-end="url(#a9)"/>
-  <text x="8" y="75" style="font-style:italic">h<tspan dy="4" style="font-size:11px;font-style:italic">t-1</tspan></text><text x="215" y="75" style="font-style:italic">h<tspan dy="4" style="font-size:11px;font-style:italic">t</tspan></text><text x="140" y="172" style="font-style:italic">x<tspan dy="4" style="font-size:11px;font-style:italic">t</tspan></text>
+  <text x="2" y="72" style="font-size:12px">tóm tắt cũ</text><text x="258" y="72" text-anchor="end" style="font-size:12px">tóm tắt mới</text><text x="140" y="172" style="font-size:12px">từ hiện tại</text>
 </svg>
 
 </div>
 <div class="text-center">
 
-**LSTM: thêm <span class="text-blue-600">cell state $c_t$</span>**
+**LSTM: thêm <span class="text-blue-600">một bộ nhớ dài hạn</span>**
 
 <LstmCell active="state" />
 
@@ -428,12 +431,12 @@ Tóm lại, RNN không học được phụ thuộc xa vì gradient bị nhân l
 <div class="grid grid-cols-2 gap-4 mt-2 text-sm">
 <div v-click class="p-2 rounded bg-blue-50">
 
-<b class="text-blue-600">$c_t \in \mathbb{R}^h$, cell state</b>: chỉ được cập nhật bằng phép nhân từng phần tử và phép cộng, không qua ma trận trọng số → <b>bộ nhớ dài hạn</b> (tương ứng CEC)
+<b class="text-blue-600">Trạng thái ô nhớ</b> (*cell state*): đường thẳng phía trên, chạy xuyên qua như **băng chuyền**. Chỉ bị *xóa bớt* và *cộng thêm*, không bị viết lại → **bộ nhớ dài hạn** (chính là CEC)
 
 </div>
 <div v-click class="p-2 rounded bg-slate-100">
 
-<b>$h_t \in \mathbb{R}^h$, hidden state</b>: đầu ra tại mỗi bước, tính từ $c_t$ qua output gate → <b>bộ nhớ ngắn hạn</b>
+<b>Trạng thái ẩn</b> (*hidden state*): **đầu ra** của mỗi bước, đọc ra từ ô nhớ → **bộ nhớ ngắn hạn**, giống bản tóm tắt của RNN
 
 </div>
 </div>
@@ -441,34 +444,34 @@ Tóm lại, RNN không học được phụ thuộc xa vì gradient bị nhân l
 <!--
 **[Người 2 · ~1 phút]**
 
-Cảm ơn Đại. Chúng ta bắt đầu bằng hình ảnh tổng thể.
+Cảm ơn Đại. Mình bắt đầu bằng bức tranh tổng thể.
 
-Bên trái là RNN: chỉ có **một trạng thái** h. Toàn bộ thông tin cần lưu phải nằm trong h, và ở mỗi bước h đều bị nhân với W h rồi đi qua tanh.
+Bên trái là RNN: chỉ có một bộ nhớ, chính là bản tóm tắt. Ở mỗi bước, bản tóm tắt này bị trộn với từ mới, đi qua hàm tanh, và được viết lại hoàn toàn.
 
-Bên phải là LSTM. Đường màu xanh nằm ngang phía trên là **cell state c t**, một vector cùng kích thước h với hidden state.
+Bên phải là LSTM. Các bạn để ý đường màu xanh nằm ngang phía trên. Đó là bộ nhớ dài hạn, tên chuyên môn là trạng thái ô nhớ, tiếng Anh là cell state.
 
-[click] Trên đường đi từ c t trừ 1 đến c t chỉ có một phép nhân từng phần tử và một phép cộng, không có ma trận trọng số và không có hàm kích hoạt. Đây là Constant Error Carousel của Hochreiter, đóng vai trò bộ nhớ dài hạn.
+[click] Đường này chạy thẳng qua ô giống như một băng chuyền. Trên đường đi chỉ có hai thao tác: xóa bớt một phần, và cộng thêm thông tin mới. Không có gì viết lại toàn bộ. Đây chính là ô nhớ giữ nguyên của Hochreiter mà bạn Đại vừa kể.
 
-[click] h t vẫn là đầu ra tại mỗi bước như ở RNN. Nó được tính từ c t thông qua output gate, đóng vai trò bộ nhớ ngắn hạn.
+[click] Ngoài ra LSTM vẫn có trạng thái ẩn, là đầu ra ở mỗi bước, giống bản tóm tắt của RNN. Nó được đọc ra từ ô nhớ, và đóng vai trò bộ nhớ ngắn hạn.
 
-Ba cổng tiếp theo điều khiển ba thao tác trên cell state: xóa, ghi và đọc.
+Ba cổng tiếp theo điều khiển ba việc trên băng chuyền: xóa, ghi, và đọc. Mình đi lần lượt từng cổng.
 -->
 
 ---
 
-# Cổng 1 · Forget gate: giữ lại bao nhiêu từ $c_{t-1}$?
+# Cổng 1 · Cổng quên (*forget gate*): giữ lại bao nhiêu bộ nhớ cũ?
 
 <div class="grid grid-cols-[1.3fr_1fr] gap-6 items-center">
 <LstmCell active="f" />
 <div>
 
-$$f_t = \sigma\big(W_f\,[h_{t-1}, x_t] + b_f\big)$$
+<div class="p-2 rounded bg-red-50 text-sm mb-2">
 
-<div class="legend mb-2">
+Nhìn **từ hiện tại** và **đầu ra bước trước**, cổng quên cho ra một số **từ 0 đến 1** cho mỗi ô nhớ:
 
-- $\sigma(z) = \dfrac{1}{1 + e^{-z}} \in (0, 1)$: hàm sigmoid, tính theo từng phần tử
-- $[h_{t-1}, x_t] \in \mathbb{R}^{h+d}$: ghép nối (concatenate) hai vector
-- $W_f \in \mathbb{R}^{h \times (h+d)}$, $b_f \in \mathbb{R}^h$: trọng số và bias của forget gate
+- **0** → xóa sạch ô nhớ đó
+- **1** → giữ nguyên ô nhớ đó
+- 0.7 → giữ lại 70%
 
 </div>
 
@@ -476,51 +479,51 @@ $$f_t = \sigma\big(W_f\,[h_{t-1}, x_t] + b_f\big)$$
 
 <v-clicks>
 
-- $f_t \in (0, 1)^h$: một hệ số cho mỗi phần tử của $c_{t-1}$
-- $f_t = 0$ → **xóa hoàn toàn** phần tử tương ứng của $c_{t-1}$
-- $f_t = 1$ → **giữ nguyên** phần tử tương ứng của $c_{t-1}$
-- Dùng **sigmoid** vì đầu ra nằm trong (0, 1): dùng làm **hệ số nhân** (gating)
-- <span class="text-red-600">Không có trong bản 1997:</span> bản gốc tương đương $f \equiv 1$
+- Số từ 0 đến 1 có được nhờ hàm **sigmoid**, giống **độ mở của một cái van**
+- Ví dụ: đọc sang câu nói về một người khác → cổng quên **gần 0** để xóa thông tin "Pháp" cũ
+- Bản 1997 **chưa có** cổng này (tương đương luôn bằng 1: không bao giờ xóa)
 
 </v-clicks>
 
 </div>
+
+<div class="text-xs opacity-60 mt-2">
+
+Công thức: $f_t = \sigma\big(W_f\,[h_{t-1}, x_t] + b_f\big)$ — σ là sigmoid
+
+</div>
+
 </div>
 </div>
 
 <!--
 **[Người 2 · ~1.5 phút]**
 
-Cổng đầu tiên là **forget gate**, màu đỏ.
+Cổng đầu tiên là cổng quên, tiếng Anh là forget gate, tô màu đỏ trên sơ đồ.
 
-Đầu vào của cổng là hidden state trước h t trừ 1 và đầu vào hiện tại x t, ghép nối thành một vector kích thước h cộng d. Vector này được nhân với ma trận W f kích thước h nhân (h cộng d), cộng bias b f, rồi đi qua hàm sigmoid xích-ma(z) bằng 1 trên (1 cộng e mũ trừ z).
+Cổng quên nhìn vào hai thứ: từ đang đọc, và đầu ra của bước trước. Từ đó nó quyết định giữ lại bao nhiêu phần bộ nhớ cũ. Kết quả là một con số từ 0 đến 1 cho mỗi ô nhớ. Bằng 0 nghĩa là xóa sạch, bằng 1 nghĩa là giữ nguyên, còn 0.7 nghĩa là giữ lại 70 phần trăm.
 
-[click] Kết quả f t là một vector cùng kích thước với cell state, mỗi phần tử nằm trong khoảng 0 đến 1.
+[click] Để có con số từ 0 đến 1, cổng dùng hàm sigmoid. Các bạn cứ hình dung nó như độ mở của một cái van: 0 là đóng hẳn, 1 là mở hết.
 
-[click] Nếu một phần tử của f t bằng 0, phần tử tương ứng của c t trừ 1 bị nhân với 0, tức là bị **xóa hoàn toàn**. [click] Nếu bằng 1 thì phần tử đó được **giữ nguyên**.
+[click] Ví dụ, khi đoạn văn chuyển sang kể về một người khác, sinh ra ở Nhật chẳng hạn, thì thông tin "Pháp" không còn đúng nữa. Lúc đó mạng học cách đóng cổng quên về gần 0 để xóa nó đi.
 
-[click] Lý do dùng sigmoid thay vì ReLU hay tanh: sigmoid cho đầu ra trong khoảng (0, 1), phù hợp để làm hệ số nhân: 0 chặn hoàn toàn, 1 cho qua hoàn toàn. ReLU không bị chặn trên, còn tanh cho giá trị âm.
-
-[click] Như bạn Đại đã nói, cổng này **không có** trong bản gốc năm 1997. Bản gốc tương đương với f luôn bằng 1, nên cell state chỉ được cộng thêm mà không có cơ chế xóa. Ví dụ, khi văn bản chuyển sang một chủ đề khác, mạng cần xóa thông tin "Pháp" khỏi cell state. Forget gate cho phép mạng học khi nào cần xóa.
+[click] Như bạn Đại đã kể, bản năm 1997 chưa có cổng này. Khi đó bộ nhớ chỉ được cộng thêm mà không bao giờ bị xóa, giống một cái tủ chỉ cho thêm đồ vào mà không cho lấy ra.
 -->
 
 ---
 
-# Cổng 2 · Input gate: ghi gì, ghi bao nhiêu?
+# Cổng 2 · Cổng ghi (*input gate*): ghi gì, ghi bao nhiêu?
 
 <div class="grid grid-cols-[1.3fr_1fr] gap-6 items-center">
 <LstmCell active="i,c" />
 <div>
 
-$$i_t = \sigma\big(W_i\,[h_{t-1}, x_t] + b_i\big)$$
+<div class="p-2 rounded bg-green-50 text-sm mb-2">
 
-$$\tilde c_t = \tanh\big(W_c\,[h_{t-1}, x_t] + b_c\big)$$
+Hai phần làm việc cùng nhau:
 
-<div class="legend mb-2">
-
-- $W_i, W_c \in \mathbb{R}^{h \times (h+d)}$, $b_i, b_c \in \mathbb{R}^h$: trọng số và bias của input gate và candidate
-- $\tilde c_t$: giá trị ứng viên (candidate) để ghi vào cell state
-- $\odot$: phép nhân từng phần tử (tích Hadamard)
+- **Nội dung mới**: thông tin *định ghi* vào ô nhớ (từ −1 đến 1, dùng hàm tanh)
+- **Cổng ghi**: *ghi bao nhiêu phần* nội dung đó (từ 0 đến 1, dùng sigmoid)
 
 </div>
 
@@ -528,48 +531,64 @@ $$\tilde c_t = \tanh\big(W_c\,[h_{t-1}, x_t] + b_c\big)$$
 
 <v-clicks>
 
-- $\tilde c_t \in (-1, 1)^h$: **nội dung** cần ghi
-- $i_t \in (0, 1)^h$: **tỉ lệ** được ghi cho mỗi phần tử
-- Phần thực sự được ghi: $i_t \odot \tilde c_t$
+- Phần thật sự được ghi = **cổng ghi × nội dung mới**
+- Tại chữ **"Pháp"**: cổng ghi **mở** (≈ 1) → ghi "Pháp" vào ô nhớ
+- Tại "chơi bóng đá", "mê truyện tranh": cổng ghi **đóng** (≈ 0) → không ghi đè lên "Pháp"
 
 </v-clicks>
 
 </div>
+
+<div class="text-xs opacity-60 mt-2">
+
+Công thức: $i_t = \sigma(W_i[h_{t-1}, x_t] + b_i)$ · $\tilde c_t = \tanh(W_c[h_{t-1}, x_t] + b_c)$
+
+</div>
+
 </div>
 </div>
 
 <!--
 **[Người 2 · ~1.5 phút]**
 
-Cổng thứ hai, màu xanh lá, gồm hai thành phần có cùng dạng với forget gate, mỗi thành phần có ma trận trọng số và bias riêng.
+Cổng thứ hai là cổng ghi, tiếng Anh là input gate, màu xanh lá. Phần này có hai thành phần làm việc cùng nhau.
 
-Thành phần thứ nhất là **candidate** c̃ t, dùng hàm tanh. [click] Đây là **nội dung** mới cần ghi vào cell state. Vì dùng tanh nên giá trị nằm trong khoảng −1 đến 1, cho phép tăng hoặc giảm giá trị của cell state.
+Thành phần thứ nhất tạo ra nội dung mới, tức thông tin định ghi vào ô nhớ. Nó dùng hàm tanh, nên giá trị nằm trong khoảng từ trừ 1 đến 1, có thể làm ô nhớ tăng lên hoặc giảm xuống.
 
-[click] Thành phần thứ hai là **input gate** i t, dùng sigmoid. Nó quyết định **tỉ lệ** được ghi cho từng phần tử: 0 là không ghi, 1 là ghi toàn bộ.
+Thành phần thứ hai là cổng ghi, lại là một cái van từ 0 đến 1, quyết định ghi bao nhiêu phần nội dung đó.
 
-[click] Phần thực sự được ghi vào là tích từng phần tử i t nhân từng phần tử c̃ t. Ký hiệu hình tròn chấm là phép nhân từng phần tử của hai vector cùng kích thước.
+[click] Phần thật sự được ghi vào ô nhớ là cổng ghi nhân với nội dung mới.
 
-Lý do tách thành hai thành phần: đây chính là vấn đề Hochreiter giải quyết bằng cổng, không phải đầu vào nào cũng cần được lưu. Với câu ví dụ, tại từ "Pháp", i gần 1 để ghi; tại các từ như "học tiểu học", "chơi bóng đá", i gần 0 để nội dung đã lưu không bị ghi đè.
+[click] Vì sao phải tách làm hai? Vì không phải từ nào cũng đáng nhớ. Tại chữ "Pháp", cổng ghi mở gần hết để ghi thông tin quan trọng này vào. [click] Còn tại những từ như "chơi bóng đá", "mê truyện tranh", cổng ghi gần như đóng, để không ghi đè lên chữ "Pháp" đã lưu. Đây chính là vấn đề lẫn lộn mà Hochreiter giải quyết bằng cổng.
 -->
 
 ---
 
-# Cập nhật cell state bằng phép cộng
+# Cập nhật bộ nhớ: xóa bớt rồi cộng thêm
 
 <div class="grid grid-cols-[1.3fr_1fr] gap-6 items-center">
 <LstmCell active="state,f,i,c" />
 <div>
 
-$$\boxed{\,c_t = \textcolor{#dc2626}{f_t} \odot c_{t-1} + \textcolor{#16a34a}{i_t \odot \tilde c_t}\,}$$
+<div class="p-3 rounded bg-blue-50 text-center">
 
-<div class="text-sm">
+**bộ nhớ mới** = <span class="text-red-600">**cổng quên** × bộ nhớ cũ</span> **+** <span class="text-green-600">**cổng ghi** × nội dung mới</span>
+
+<div class="text-sm mt-1 opacity-70">
+
+$c_t = f_t \odot c_{t-1} + i_t \odot \tilde c_t$
+
+</div>
+
+</div>
+
+<div class="text-sm mt-3">
 
 <v-clicks>
 
-- <span class="text-red-600">Phần giữ lại từ $c_{t-1}$</span> **+** <span class="text-green-600">phần ghi mới</span>
-- RNN: $h_t = \tanh(W_h h_{t-1} + \dots)$, trạng thái cũ bị **nhân với ma trận $W_h$ rồi qua tanh**
-- LSTM: $c_{t-1}$ chỉ được **nhân từng phần tử với $f_t \in (0,1)^h$** rồi **cộng**
-- Phép cộng này là cơ sở của phân tích gradient ở phần 3
+- **RNN:** mỗi bước, toàn bộ bản tóm tắt bị **viết lại** (nhân trọng số rồi qua tanh)
+- **LSTM:** bộ nhớ cũ chỉ bị **xóa bớt** theo cổng quên, rồi **cộng thêm** phần mới
+- Chính **phép cộng** này giúp LSTM học được những gì ở xa (phần 3 sẽ giải thích)
 
 </v-clicks>
 
@@ -580,32 +599,29 @@ $$\boxed{\,c_t = \textcolor{#dc2626}{f_t} \odot c_{t-1} + \textcolor{#16a34a}{i_
 <!--
 **[Người 2 · ~1 phút]**
 
-Bây giờ ghép hai cổng lại để cập nhật cell state. Công thức trong khung là công thức quan trọng nhất của LSTM.
+Bây giờ ghép hai cổng lại. Đây là công thức quan trọng nhất của LSTM, và mình viết nó bằng lời: bộ nhớ mới bằng cổng quên nhân bộ nhớ cũ, cộng với cổng ghi nhân nội dung mới. Nói cách khác: xóa bớt một phần cái cũ, rồi cộng thêm một phần cái mới.
 
-[click] Diễn giải: cell state mới bằng phần được giữ lại từ cell state cũ, **cộng** với phần được ghi mới.
+[click] So với RNN: ở RNN, mỗi bước bản tóm tắt bị viết lại hoàn toàn, nhân với trọng số rồi đi qua tanh.
 
-[click] So sánh với RNN: trạng thái cũ h t trừ 1 bị nhân với ma trận W h rồi đi qua tanh ở **mỗi bước**.
+[click] Còn ở LSTM, bộ nhớ cũ không bị viết lại. Nó chỉ bị xóa bớt theo cổng quên, rồi được cộng thêm phần mới. Nếu cổng quên mở hết và cổng ghi đóng, bộ nhớ đi qua bước đó y nguyên.
 
-[click] Ở LSTM, c t trừ 1 chỉ được nhân từng phần tử với f t, có giá trị trong khoảng 0 đến 1, rồi **cộng** thêm phần ghi mới. Không có phép nhân ma trận, không có hàm kích hoạt.
-
-[click] Lát nữa bạn Hiếu sẽ chứng minh chính phép cộng này giúp gradient không bị biến mất.
+[click] Lát nữa bạn Hiếu sẽ cho thấy chính phép cộng đơn giản này là lý do LSTM học được những mối liên hệ ở xa.
 -->
 
 ---
 
-# Cổng 3 · Output gate: đọc ra bao nhiêu?
+# Cổng 3 · Cổng đọc (*output gate*): đọc ra bao nhiêu?
 
 <div class="grid grid-cols-[1.3fr_1fr] gap-6 items-center">
 <LstmCell active="o" />
 <div>
 
-$$o_t = \sigma\big(W_o\,[h_{t-1}, x_t] + b_o\big)$$
+<div class="p-2 rounded bg-purple-50 text-sm mb-2">
 
-$$h_t = o_t \odot \tanh(c_t)$$
+**đầu ra** = **cổng đọc** × tanh(**bộ nhớ**)
 
-<div class="legend mb-2">
-
-- $W_o \in \mathbb{R}^{h \times (h+d)}$, $b_o \in \mathbb{R}^h$: trọng số và bias của output gate
+- tanh: ép giá trị bộ nhớ về khoảng −1 đến 1
+- cổng đọc (0 đến 1): ở bước này **cho đọc ra bao nhiêu**
 
 </div>
 
@@ -613,111 +629,133 @@ $$h_t = o_t \odot \tanh(c_t)$$
 
 <v-clicks>
 
-- $\tanh(c_t)$: đưa giá trị cell state về khoảng (−1, 1)
-- $o_t \in (0,1)^h$: tỉ lệ **đọc ra** của từng phần tử ở bước này
-- Cell state có thể **lưu** một thông tin qua nhiều bước mà **không ảnh hưởng** tới $h_t$ ở các bước đó
+- Bộ nhớ có thể **cất** chữ "Pháp" suốt 30 bước mà **không làm nhiễu** đầu ra ở các bước đó
+- Đến chữ **"tiếng"**: cổng đọc **mở** → lấy "Pháp" ra để đoán từ tiếp theo
 
 </v-clicks>
 
 </div>
+
+<div class="text-xs opacity-60 mt-2">
+
+Công thức: $o_t = \sigma(W_o[h_{t-1}, x_t] + b_o)$ · $h_t = o_t \odot \tanh(c_t)$
+
+</div>
+
 </div>
 </div>
 
 <!--
 **[Người 2 · ~1 phút]**
 
-Cổng cuối cùng là **output gate**, màu tím.
+Cổng cuối cùng là cổng đọc, tiếng Anh là output gate, màu tím.
 
-Cell state là trạng thái nội bộ của ô. Đầu ra h t được tính từ cell state qua hai bước. [click] Đầu tiên cho c t qua tanh để đưa giá trị về khoảng −1 đến 1. [click] Sau đó nhân từng phần tử với output gate o t, cũng là một sigmoid với trọng số W o và bias b o riêng, để quyết định tỉ lệ đọc ra của từng phần tử.
+Ô nhớ là thứ cất giữ bên trong. Đầu ra của mỗi bước được đọc ra từ ô nhớ qua hai bước: đưa bộ nhớ qua hàm tanh để ép về khoảng từ trừ 1 đến 1, rồi nhân với cổng đọc. Cổng đọc lại là một cái van, quyết định ở bước này cho đọc ra bao nhiêu.
 
-[click] Hệ quả: mạng có thể **lưu** thông tin "Pháp" trong cell state suốt 30 bước mà không ảnh hưởng tới các đầu ra ở giữa. Đến từ "tiếng", khi cần dự đoán tên ngôn ngữ, output gate mới mở để đọc thông tin đó ra h t.
+[click] Nhờ vậy, mạng có thể cất chữ "Pháp" trong ô nhớ suốt 30 bước mà không làm nhiễu đầu ra ở các bước giữa: cổng đọc đóng thì thông tin vẫn nằm yên trong ô nhớ.
+
+[click] Đến chữ "tiếng", khi cần đoán tên ngôn ngữ, cổng đọc mới mở ra để lấy thông tin "Pháp" ra dùng.
 -->
 
 ---
 clicks: 4
 ---
 
-# Tổng hợp: 6 phương trình của LSTM
+# Tổng hợp: một ô LSTM làm 4 việc
 
-<div class="grid grid-cols-[1.2fr_1fr] gap-6 items-center">
+<div class="grid grid-cols-[1.15fr_1fr] gap-6 items-center">
 <LstmCell :active="['all', 'f', 'i,c', 'state,f,i,c', 'o'][$clicks] || 'all'" />
 <div class="eqs">
 
 <div :class="{ hl: $clicks === 1 }">
+
+**1 · Quên:** <span class="text-red-600">cổng quên</span> quyết định giữ bao nhiêu bộ nhớ cũ
 
 $f_t = \sigma(W_f[h_{t-1}, x_t] + b_f)$
 
 </div>
 <div :class="{ hl: $clicks === 2 }">
 
-$i_t = \sigma(W_i[h_{t-1}, x_t] + b_i)$
+**2 · Chuẩn bị ghi:** tạo <span class="text-green-600">nội dung mới</span> và <span class="text-green-600">cổng ghi</span>
 
-$\tilde c_t = \tanh(W_c[h_{t-1}, x_t] + b_c)$
+$i_t = \sigma(W_i[h_{t-1}, x_t] + b_i)$ · $\tilde c_t = \tanh(W_c[h_{t-1}, x_t] + b_c)$
 
 </div>
 <div :class="{ hl: $clicks === 3 }">
+
+**3 · Cập nhật:** <span class="text-blue-600">bộ nhớ</span> = xóa bớt + cộng thêm
 
 $c_t = f_t \odot c_{t-1} + i_t \odot \tilde c_t$
 
 </div>
 <div :class="{ hl: $clicks === 4 }">
 
-$o_t = \sigma(W_o[h_{t-1}, x_t] + b_o)$
+**4 · Đọc:** <span class="text-purple-600">cổng đọc</span> lấy đầu ra từ bộ nhớ
 
-$h_t = o_t \odot \tanh(c_t)$
+$o_t = \sigma(W_o[h_{t-1}, x_t] + b_o)$ · $h_t = o_t \odot \tanh(c_t)$
 
 </div>
-<div class="legend mt-2 px-2 opacity-80">
+<div class="text-xs opacity-70 mt-2 px-2">
 
-$\sigma$: sigmoid · $\odot$: nhân từng phần tử · $W_f, W_i, W_c, W_o \in \mathbb{R}^{h \times (h+d)}$ · $b_f, b_i, b_c, b_o \in \mathbb{R}^h$
+Ký hiệu: $x$ đầu vào · $h$ đầu ra (trạng thái ẩn) · $c$ bộ nhớ (trạng thái ô nhớ) · $W$, $b$ trọng số · σ sigmoid · $\odot$ nhân từng phần tử. Có 4 bộ trọng số $W_f, W_i, W_c, W_o$ → LSTM có **gấp 4 lần** trọng số so với RNN
 
 </div>
 </div>
 </div>
 
 <style>
-.eqs > div { padding: .1rem .6rem; border-radius: 8px; transition: background .3s; }
+.eqs > div { padding: .15rem .6rem; border-radius: 8px; transition: background .3s; font-size: .85rem; }
+.eqs p { margin: .1rem 0; }
+.eqs p + p { font-size: .78rem; opacity: .75; }
 .eqs .hl { background: #fef9c3; }
 </style>
 
 <!--
 **[Người 2 · ~1 phút]**
 
-Đây là toàn bộ LSTM trên một slide: sáu phương trình. Mình bấm lần lượt để đối chiếu từng phương trình với vị trí tương ứng trên sơ đồ.
+Đây là toàn bộ LSTM trên một slide. Một ô LSTM làm đúng bốn việc, mình bấm lần lượt để các bạn đối chiếu với sơ đồ.
 
-[click] Forget gate. [click] Input gate và candidate. [click] Cập nhật cell state. [click] Output gate và đầu ra h t.
+[click] Việc một: quên. Cổng quên quyết định giữ lại bao nhiêu bộ nhớ cũ.
 
-Để ý rằng bốn phương trình f, i, c̃, o có **cùng một dạng**: nhân ma trận với [h t trừ 1, x t], cộng bias, rồi cho qua sigmoid hoặc tanh. Điểm này rất quan trọng khi tính số tham số và khi xem cách PyTorch lưu trọng số. Bạn Hiếu sẽ quay lại điểm này.
+[click] Việc hai: chuẩn bị ghi. Tạo nội dung mới, và cổng ghi quyết định ghi bao nhiêu.
+
+[click] Việc ba: cập nhật. Bộ nhớ mới bằng phần cũ đã xóa bớt cộng phần mới.
+
+[click] Việc bốn: đọc. Cổng đọc quyết định lấy ra bao nhiêu từ bộ nhớ để làm đầu ra.
+
+Công thức nằm dưới mỗi dòng cho bạn nào muốn đối chiếu với sách. Các bạn để ý ba cổng và phần nội dung mới đều có cùng một dạng, mỗi phần có một bộ trọng số riêng. Bốn bộ trọng số, nên LSTM có gấp 4 lần trọng số so với RNN cùng kích thước, đúng như bảng so sánh lúc đầu.
 -->
 
 ---
 
-# Mô phỏng tính toán trong một ô LSTM
+# Thử tay: theo dõi bộ nhớ của một ô LSTM
 
 <LstmSimulator />
 
 <!--
 **[Người 2 · ~3 phút] — slide demo, nên để chủ động thời gian**
 
-Bây giờ chúng ta chạy một LSTM có kích thước trạng thái ẩn bằng 1, nên mọi đại lượng đều là số vô hướng và có thể tính tay. Trọng số được đặt cố định như trong các phương trình bên dưới sơ đồ.
+Bây giờ mình chạy thử một ô LSTM thu nhỏ, trong đó bộ nhớ chỉ là một con số, để các bạn nhìn thấy các cổng hoạt động.
 
-**Demo 1, kéo thanh trượt:**
-- Đặt x t bằng 2: input gate i xấp xỉ 1, candidate c̃ xấp xỉ 1, nên cell state c tăng lên gần 1. Mạng **ghi** thông tin vào cell state.
-- Đặt x t bằng trừ 2: forget gate f xấp xỉ 0, nên c bị **xóa**.
+Trọng số của ô này nhóm đặt sẵn, không phải học, sao cho đầu vào có ý nghĩa dễ hiểu, như ô chú thích bên phải: đầu vào bằng 2 nghĩa là "đây là thông tin quan trọng, hãy ghi nhớ", giống chữ "Pháp". Đầu vào bằng 0 là một từ bình thường. Đầu vào bằng trừ 2 nghĩa là "hết ngữ cảnh rồi, hãy xóa đi".
 
-**Demo 2, bấm Reset rồi bấm Step liên tục.** Chuỗi đầu vào là [2, 0, 0, 0, −2, 0].
-- Bước 1, x = 2: c xấp xỉ 0.99, mạng ghi thông tin.
-- Bước 2 đến 4, x = 0: i xấp xỉ 0.06 nên gần như không ghi gì mới, còn f xấp xỉ 0.96 nên c giảm chậm: 0.98, 0.97, 0.95. Thông tin được **giữ**. Các bạn theo dõi bảng bên phải.
-- Bước 5, x = −2: f xấp xỉ 0.06, c giảm về khoảng 0.06. Mạng **xóa** thông tin.
+**Demo 1, kéo thanh "Đầu vào lúc này":**
+- Đặt bằng 2: cổng ghi mở gần hết, bộ nhớ tăng lên gần 1. Dòng chữ phía dưới sơ đồ báo ô đang GHI.
+- Đặt bằng trừ 2: cổng quên đóng về gần 0, bộ nhớ bị XÓA.
 
-**Demo 3, bật "Chỉnh trực tiếp các cổng":** đặt f bằng 1, i bằng 0 thì c t bằng c t trừ 1 chính xác. Đây là trường hợp CEC của Hochreiter năm 1997.
+**Demo 2, bấm "Làm lại" rồi bấm "Bước tiếp" liên tục.** Chuỗi chạy thử là: một từ quan trọng, ba từ bình thường, một tín hiệu xóa, rồi một từ bình thường.
+- Bước 1, từ quan trọng: bộ nhớ lên khoảng 0.99, mạng ghi nhớ.
+- Bước 2 đến 4, từ bình thường: cổng ghi gần như đóng nên không ghi gì mới, cổng quên mở khoảng 96% nên bộ nhớ chỉ giảm rất chậm: 0.98, 0.97, 0.95. Các bạn nhìn cột "bộ nhớ" trong bảng bên phải: thông tin được GIỮ.
+- Bước 5, tín hiệu xóa: cổng quên đóng, bộ nhớ rơi về gần 0. Mạng XÓA thông tin.
 
-Trong mạng thật, các trọng số này được **học** từ dữ liệu, chứ không phải do chúng ta đặt.
+**Demo 3, tích ô "Tự chỉnh các cổng bằng tay":** kéo cổng quên lên 1, cổng ghi về 0. Khi đó bộ nhớ mới bằng đúng bộ nhớ cũ, không mất gì cả. Đây chính là ô nhớ giữ nguyên của Hochreiter năm 1997.
+
+Trong mạng thật, các trọng số này không do mình đặt mà được học từ dữ liệu.
 -->
 
 ---
 
-# Ví dụ minh họa: giá trị các cổng trên câu mẫu
+# Ví dụ: các cổng mở / đóng thế nào trên câu mẫu?
 
 <div class="mt-4">
 <GateHeatmap />
@@ -725,328 +763,204 @@ Trong mạng thật, các trọng số này được **học** từ dữ liệu,
 
 <v-clicks>
 
-- Tại **"Pháp"**: <span class="text-green-600">i ≈ 1</span>, ghi thông tin "Pháp" vào $c_t$
-- Ở các từ giữa: <span class="text-red-600">f ≈ 1</span>, giữ nguyên $c_t$; <span class="text-green-600">i ≈ 0</span>, không ghi đè
-- Tại **"tiếng"**: <span class="text-purple-600">o ≈ 1</span>, đọc thông tin ra để dự đoán "Pháp"
+- Tại **"Pháp"**: <span class="text-green-600">cổng ghi ≈ 1</span> → ghi "Pháp" vào bộ nhớ
+- Ở các từ giữa: <span class="text-red-600">cổng quên ≈ 1</span> → giữ nguyên bộ nhớ; <span class="text-green-600">cổng ghi ≈ 0</span> → không ghi đè
+- Tại **"tiếng"**: <span class="text-purple-600">cổng đọc ≈ 1</span> → đọc "Pháp" ra để đoán từ tiếp theo
 
 </v-clicks>
 
 <!--
 **[Người 2 · ~1 phút]**
 
-Quay lại câu ví dụ ở đầu bài. Bảng này minh họa giá trị của ba cổng tại từng từ mà ta mong muốn một mô hình đã huấn luyện tốt có được. Lưu ý đây là số liệu minh họa, không phải số đo từ một mô hình đã huấn luyện.
+Quay lại câu ví dụ ở đầu bài. Bảng này cho thấy ba cổng mở hay đóng ở từng từ, theo cách mà ta mong một mô hình đã học tốt sẽ làm. Màu càng đậm thì cổng càng mở. Lưu ý đây là số liệu minh họa để giải thích ý tưởng, không phải số đo từ một mô hình thật.
 
-[click] Tại từ "Pháp", input gate gần 1 để ghi thông tin vào cell state.
+[click] Tại chữ "Pháp", cổng ghi mở để ghi thông tin vào bộ nhớ.
 
-[click] Ở các từ ở giữa, forget gate gần 1 để giữ cell state, input gate gần 0 để không ghi đè.
+[click] Ở các từ ở giữa, cổng quên mở để giữ nguyên bộ nhớ, còn cổng ghi đóng để không ghi đè lên.
 
-[click] Tại từ "tiếng", output gate gần 1 để đọc thông tin "Pháp" ra h t và dự đoán từ tiếp theo.
+[click] Tại chữ "tiếng", cổng đọc mở để lấy chữ "Pháp" ra và đoán từ tiếp theo.
 
-Đến đây là toàn bộ cơ chế lan truyền xuôi của LSTM. Câu hỏi còn lại: phép cộng trong cập nhật cell state có ý nghĩa gì về mặt toán? Mời bạn Hiếu.
+Đến đây là toàn bộ cách một ô LSTM hoạt động khi đọc câu. Câu hỏi còn lại là: vì sao cái phép cộng đơn giản kia lại giúp LSTM học được những gì ở xa? Mời bạn Hiếu.
 -->
 
 ---
 
-# Kích thước ma trận và số tham số
 
-<div class="grid grid-cols-2 gap-6">
-<div>
+# Vì sao LSTM học được những gì ở xa?
 
-Với đầu vào $x_t \in \mathbb{R}^d$ và hidden $h_t \in \mathbb{R}^h$:
+<div class="text-sm mb-3">Khi học, tín hiệu lỗi phải đi ngược từ chữ "tiếng" về chữ "Pháp". Hai mạng cho nó đi theo hai con đường khác nhau:</div>
 
-$$[h_{t-1}, x_t] \in \mathbb{R}^{h+d}, \qquad W_f, W_i, W_c, W_o \in \mathbb{R}^{h \times (h+d)}$$
+<div class="grid grid-cols-2 gap-5">
+<div v-click="1" class="p-3 rounded bg-orange-50">
 
-Gộp **4 ma trận** thành 1, $W \in \mathbb{R}^{4h \times (h+d)}$, $b \in \mathbb{R}^{4h}$:
+### <span class="text-orange-600">RNN: đi qua bản tóm tắt</span>
 
-$$W\,[h_{t-1}, x_t] + b = \begin{bmatrix} z_i \\ z_f \\ z_c \\ z_o \end{bmatrix} \in \mathbb{R}^{4h}$$
+Mỗi bước lùi, tín hiệu bị nhân với **trọng số** và **đạo hàm của tanh**, một hệ số khó giữ đúng bằng 1:
 
-<div class="legend">
+<div class="text-center my-2">0.9 × 0.9 × … × 0.9 (50 lần) ≈ <b class="text-orange-600">0.005</b></div>
 
-$z_\ast$: giá trị trước kích hoạt của từng cổng; $i = \sigma(z_i)$, $f = \sigma(z_f)$, $\tilde c = \tanh(z_c)$, $o = \sigma(z_o)$
-
-</div>
-
-<div class="text-sm opacity-80">PyTorch lưu đúng như vậy: <code>weight_ih_l0</code> (4h × d), <code>weight_hh_l0</code> (4h × h), thứ tự các cổng là <b>i, f, g, o</b></div>
+→ đến chữ "Pháp" thì tín hiệu gần như **mất hết**
 
 </div>
-<div>
+<div v-click="2" class="p-3 rounded bg-blue-50">
 
-$$\#\text{params} = 4 \cdot \big[h(h+d) + h\big]$$
+### <span class="text-blue-600">LSTM: đi dọc băng chuyền bộ nhớ</span>
 
-<div class="mt-6 text-lg">
+Vì bộ nhớ mới = cổng quên × bộ nhớ cũ **+** …, mỗi bước lùi tín hiệu **chỉ nhân với cổng quên**, không có trọng số, không có tanh:
 
-❓ Với $d = 100$, $h = 128$?
+<div class="text-center my-2">0.99 × 0.99 × … × 0.99 (50 lần) ≈ <b class="text-blue-600">0.6</b></div>
 
-</div>
-
-<div v-click class="mt-2">
-
-$4 \cdot [128 \cdot 228 + 128] = \mathbf{117{,}248}$
-
-RNN: $128 \cdot 228 + 128 = 29{,}312$, nên **LSTM gấp 4 lần**
-
-<div class="text-sm opacity-80 mt-2">
-
-PyTorch dùng 2 vector bias (<code>b_ih</code>, <code>b_hh</code>) nên con số là $4 \cdot [h(h+d) + 2h] = 117{,}760$
-
-</div>
+→ mạng **tự học** giữ cổng quên gần 1 khi cần nhớ
 
 </div>
 </div>
-</div>
 
-<!--
-**[Người 3 · ~1.5 phút]**
+<div v-click="3" class="mt-3 text-center text-sm p-2 rounded bg-slate-100">
 
-Cảm ơn Minh. Phần của mình đi vào toán, bắt đầu bằng một câu hỏi rất thực tế: một lớp LSTM có bao nhiêu tham số?
-
-Gọi kích thước đầu vào là d, kích thước hidden là h. Vector ghép [h t trừ 1, x t] có kích thước h cộng d. Mỗi cổng cần một ma trận h nhân (h cộng d) và một bias h.
-
-Như bạn Minh đã nói, bốn phương trình f, i, c̃, o có cùng dạng, nên ta có thể **gộp 4 ma trận thành một** ma trận 4h nhân (h cộng d), thực hiện một phép nhân rồi tách vector kết quả thành 4 đoạn, mỗi đoạn dài h, sau đó áp dụng sigmoid hoặc tanh cho từng đoạn. PyTorch cũng làm đúng như vậy: các bạn mở `weight_ih_l0` sẽ thấy nó có 4h hàng, theo thứ tự i, f, g, o, trong đó g là candidate.
-
-Vậy số tham số là 4 nhân [h(h cộng d) cộng h]. Mời các bạn tính nhẩm với d = 100, h = 128.
-
-[click] Kết quả là 117,248, đúng gấp 4 lần RNN. Lưu ý: PyTorch dùng hai vector bias riêng cho phần đầu vào và phần trạng thái ẩn, nên nếu đếm trong code sẽ ra 117,760. Tương tự, `nn.RNN` với cùng kích thước có 29,440 tham số. Đây là điểm hay gây nhầm lẫn khi làm bài.
--->
-
----
-
-# Tính tay lan truyền xuôi qua 2 bước thời gian
-
-<div class="text-sm mb-2">
-
-LSTM vô hướng ở slide mô phỏng ($h = d = 1$): &nbsp; $f_t = \sigma(0.5h_{t-1} + 3x_t + 3)$ · $i_t = \sigma(0.5h_{t-1} + 4x_t - 3)$ · $\tilde c_t = \tanh(0.5h_{t-1} + 2x_t)$ · $o_t = \sigma(0.5h_{t-1} + x_t + 1)$ · khởi tạo $h_0 = c_0 = 0$
-
-</div>
-
-<div class="calc">
-
-| Đại lượng | t = 1 &nbsp;($x_1 = 2$, $h_0 = 0$) | t = 2 &nbsp;($x_2 = 0$, $h_1 = 0.7225$) |
-|---|---|---|
-| $f_t$ | <span v-click="1">$\sigma(9) = 0.9999$</span> | <span v-click="4">$\sigma(3.361) = 0.9665$</span> |
-| $i_t$ | <span v-click="1">$\sigma(5) = 0.9933$</span> | <span v-click="4">$\sigma(-2.639) = 0.0667$</span> |
-| $\tilde c_t$ | <span v-click="1">$\tanh(4) = 0.9993$</span> | <span v-click="4">$\tanh(0.361) = 0.3463$</span> |
-| $c_t = f_t c_{t-1} + i_t \tilde c_t$ | <span v-click="2">$0 + 0.9933 \cdot 0.9993 = \mathbf{0.9926}$</span> | <span v-click="5">$0.9665 \cdot 0.9926 + 0.0667 \cdot 0.3463 = \mathbf{0.9825}$</span> |
-| $o_t$ | <span v-click="3">$\sigma(3) = 0.9526$</span> | <span v-click="6">$\sigma(1.361) = 0.7960$</span> |
-| $h_t = o_t \tanh(c_t)$ | <span v-click="3">$0.9526 \cdot \tanh(0.9926) = \mathbf{0.7225}$</span> | <span v-click="6">$0.7960 \cdot \tanh(0.9825) = \mathbf{0.6003}$</span> |
-
-</div>
-
-<style>
-.calc table { font-size: .8rem; }
-.calc td, .calc th { padding: .25rem .6rem !important; }
-</style>
-
-<div v-click="7" class="mt-3 p-2 rounded bg-blue-50 text-center">
-
-Ở bước 2, gần như không ghi thêm ($i_2$ ≈ 0.07) nhưng $c_2$ vẫn ≈ 0.98: giá trị của $c_1$ được <b>giữ lại</b> nhờ $f_2$ ≈ 0.97
+LSTM vẫn có những "đường vòng" giống RNN (qua đầu ra của bước trước), các đường này vẫn có thể yếu dần.
+Nhưng chỉ cần **còn một con đường thẳng** qua bộ nhớ là tín hiệu vẫn về tới nơi.
 
 </div>
 
 <!--
-**[Người 3 · ~2 phút]**
+**[Người 3 · ~2.5 phút] — slide quan trọng nhất của phần này**
 
-Để kiểm tra lại quá trình lan truyền xuôi, mình tính tay hai bước với LSTM vô hướng ở slide mô phỏng. Ban đầu h 0 bằng c 0 bằng 0.
+Cảm ơn Minh. Phần của mình trả lời câu hỏi: vì sao LSTM học được những gì ở xa, còn RNN thì không?
 
-**Bước 1, x = 2.** [click] Forget gate bằng sigmoid của 0.5 nhân 0 cộng 3 nhân 2 cộng 3 bằng 9, ra khoảng 0.9999. Input gate bằng sigmoid của 5, ra 0.9933. Candidate bằng tanh của 4, ra 0.9993.
-[click] Cell state: c 0 bằng 0 nên chỉ còn phần ghi mới, 0.9933 nhân 0.9993 bằng 0.9926.
-[click] Output gate bằng sigmoid của 3, ra 0.9526. Vậy h 1 bằng 0.9526 nhân tanh(0.9926) bằng 0.7225.
+Khi huấn luyện, mạng đoán sai ở chữ cuối, và tín hiệu lỗi phải đi ngược về tận chữ "Pháp" để mạng biết chữ "Pháp" quan trọng. RNN và LSTM cho tín hiệu này đi theo hai con đường khác nhau.
 
-**Bước 2, x = 0.** Bây giờ h 1 bằng 0.7225, nên 0.5 h bằng 0.361.
-[click] f bằng sigmoid của 3.361, ra 0.9665. i bằng sigmoid của −2.639, ra 0.0667, rất nhỏ. Candidate là 0.3463.
-[click] Cell state: 0.9665 nhân 0.9926 cộng 0.0667 nhân 0.3463 bằng 0.9825.
-[click] o là 0.796, và h 2 bằng 0.6003.
+[click] Ở RNN, tín hiệu chỉ có một đường là đi ngược qua các bản tóm tắt. Mỗi lần lùi một bước, nó bị nhân với trọng số và với đạo hàm của hàm tanh. Hệ số này rất khó giữ đúng bằng 1. Giả sử nó là 0.9, thì sau 50 bước chỉ còn khoảng 0.005, tức nửa phần trăm. Đến chữ "Pháp" thì tín hiệu gần như không còn gì.
 
-[click] Điểm cần thấy: ở bước 2 gần như không có gì mới được ghi, nhưng cell state vẫn giữ ở mức 0.98. Giá trị đã ghi ở bước 1 được giữ lại nhờ forget gate gần bằng 1.
--->
+[click] Ở LSTM, nhớ lại công thức bộ nhớ của bạn Minh: bộ nhớ mới bằng cổng quên nhân bộ nhớ cũ, cộng phần mới. Vì là phép cộng, khi đi ngược dọc theo băng chuyền bộ nhớ, tín hiệu chỉ bị nhân với cổng quên, không có trọng số, không có tanh. Mà cổng quên là thứ mạng tự học được. Khi cần nhớ, mạng học cách giữ cổng quên gần 1. Với cổng quên bằng 0.99, sau 50 bước tín hiệu vẫn còn khoảng 60 phần trăm.
 
----
-clicks: 3
----
-
-# Lan truyền ngược: gradient qua cell state
-
-<div v-click="1" class="text-sm">
-
-**Công thức đầy đủ** ($c_{t-1}$ ảnh hưởng tới $c_t$ qua 2 đường):
-
-$$
-\frac{\partial c_t}{\partial c_{t-1}} =
-\underbrace{\textcolor{#2563eb}{\operatorname{diag}(f_t)}}_{\text{trực tiếp}}
-+
-\underbrace{\textcolor{#94a3b8}{\Big[\operatorname{diag}(c_{t-1}\!\odot\!\sigma'_f)\,W_{fh} + \operatorname{diag}(\tilde c_t\!\odot\!\sigma'_i)\,W_{ih} + \operatorname{diag}(i_t\!\odot\!\tanh'_{\tilde c})\,W_{ch}\Big]\operatorname{diag}\big(o_{t-1}\!\odot\!\tanh'(c_{t-1})\big)}}_{\text{gián tiếp, đi qua } h_{t-1}\text{: có } W \text{ và đạo hàm, giống RNN}}
-$$
-
-<div class="legend opacity-80">
-
-$W_{fh}, W_{ih}, W_{ch} \in \mathbb{R}^{h \times h}$: phần của $W_f, W_i, W_c$ nhân với $h_{t-1}$ (vì $W_f [h_{t-1}, x_t] = W_{fh} h_{t-1} + W_{fx} x_t$) · $\sigma'_f, \sigma'_i, \tanh'_{\tilde c}$: đạo hàm của hàm kích hoạt tại giá trị trước kích hoạt của $f_t, i_t, \tilde c_t$ · đường gián tiếp dùng $h_{t-1} = o_{t-1} \odot \tanh(c_{t-1})$
-
-</div>
-
-</div>
-
-<div v-click="2" class="grid grid-cols-2 gap-4 mt-1">
-<div class="p-2 rounded bg-orange-50 text-center">
-
-**RNN**
-
-$$\frac{\partial h_T}{\partial h_k} = \prod \operatorname{diag}(\tanh')\,W_h$$
-
-ma trận $W_h$ nhân lặp lại → biến mất / bùng nổ
-
-</div>
-<div class="p-2 rounded bg-blue-50 text-center">
-
-**LSTM, đường trực tiếp**
-
-$$\frac{\partial c_T}{\partial c_k} \approx \prod_{t=k+1}^{T} \operatorname{diag}(f_t)$$
-
-không có $W$, không có $\tanh'$; mạng **tự học** giữ $f \approx 1$
-
-</div>
-</div>
-
-<div v-click="3" class="mt-2 text-center text-sm">
-📜 Bản gốc 1997 <b>chủ động cắt bỏ</b> các số hạng gián tiếp khi tính gradient, chỉ giữ đường trực tiếp.
-</div>
-
-<!--
-**[Người 3 · ~2.5 phút] — slide toán quan trọng nhất**
-
-Đây là câu hỏi cốt lõi: khi lan truyền ngược, gradient đi từ c t về c t trừ 1 như thế nào?
-
-[click] Nhìn lại công thức c t bằng f t nhân từng phần tử c t trừ 1 cộng i t nhân từng phần tử c̃ t. Biến c t trừ 1 ảnh hưởng tới c t qua **hai đường**.
-
-- **Đường trực tiếp**, màu xanh: c t trừ 1 được nhân từng phần tử với f t. Đạo hàm theo đường này là ma trận đường chéo của f t.
-- **Đường gián tiếp**, màu xám: c t trừ 1 tạo ra h t trừ 1 bằng o t trừ 1 nhân từng phần tử tanh(c t trừ 1), và h t trừ 1 là đầu vào của các cổng ở bước t. Đạo hàm theo đường này cho ra ba số hạng trong ngoặc vuông, ứng với f t, i t và c̃ t. W fh, W ih, W ch là phần của các ma trận trọng số nhân với h t trừ 1. Không cần nhớ chi tiết các số hạng này; điểm cần thấy là mỗi số hạng đều chứa **ma trận W** và **đạo hàm của sigmoid hoặc tanh**, tức là có cấu trúc giống RNN.
-
-[click] Bây giờ đặt RNN và đường trực tiếp của LSTM cạnh nhau. Bên trái, RNN: tích của các ma trận đường chéo của tanh phẩy, nhân W h, nên biến mất hoặc bùng nổ. Bên phải, LSTM: chỉ là tích các hàm đường chéo của f t. **Không có ma trận trọng số, không có đạo hàm của hàm kích hoạt.** Hơn nữa, f t là đại lượng mạng **học** được: khi cần lưu thông tin, mạng học cách giữ f gần 1, và gradient truyền qua gần như không suy giảm.
-
-Các số hạng gián tiếp vẫn có thể biến mất. Nhưng gradient toàn phần là tổng theo các đường, nên **chỉ cần đường trực tiếp còn thì gradient vẫn truyền về được**.
-
-[click] Một chi tiết lịch sử: trong bài báo năm 1997, Hochreiter và Schmidhuber **chủ động cắt bỏ** các số hạng gián tiếp khi huấn luyện (truncated gradient), chỉ giữ đường trực tiếp. Phải đến năm 2005, Graves mới huấn luyện bằng gradient đầy đủ.
+[click] Nói cho công bằng: LSTM vẫn còn những đường vòng giống RNN, đi qua đầu ra của bước trước, và các đường này vẫn có thể yếu dần. Nhưng tín hiệu là tổng của tất cả các đường. Chỉ cần còn một con đường thẳng qua bộ nhớ là tín hiệu vẫn về tới chữ "Pháp". Đây chính là ý tưởng "giữ nguyên rồi cộng thêm" của Hochreiter năm 1991.
 -->
 
 ---
 
-# So sánh $\gamma^T$ (RNN) và $\prod f_t$ (LSTM)
+# Thử tay: RNN và LSTM sau nhiều bước
 
-<div class="mt-6">
+<div class="mt-4">
 <GradientDecay lstm />
 </div>
 
-<div class="mt-4 text-center text-sm opacity-80">Ví dụ: γ = 0.9, f<sub>t</sub> = 0.99 ở mọi bước, T = 100 → RNN: 0.9¹⁰⁰ ≈ 3·10⁻⁵, LSTM: 0.99¹⁰⁰ ≈ 0.37</div>
+<div class="mt-4 text-center text-sm opacity-80">Ví dụ: 100 bước, RNN mỗi bước × 0.9, LSTM mỗi bước × 0.99 → RNN còn khoảng 0.003%, LSTM còn khoảng 37%</div>
 
 <!--
 **[Người 3 · ~1 phút]**
 
-Đây là đồ thị của bạn Đại ở slide 5, thêm đường màu xanh cho đường trực tiếp của LSTM, giả sử f t bằng nhau ở mọi bước.
+Đây là biểu đồ của bạn Đại ở slide 5, thêm đường màu xanh cho LSTM. Trục ngang là số bước đi ngược về quá khứ, trục dọc là phần trăm tín hiệu lỗi còn lại.
 
-**(Demo)** Đặt ga-ma = 0.9 cho RNN, f = 0.99 cho LSTM, T = 100. RNN còn khoảng 3 nhân 10 mũ trừ 5, LSTM còn khoảng 0.37, chênh nhau hơn **10 mũ 4 lần**.
+**(Demo)** Mình đặt số bước bằng 100. RNN mỗi bước nhân 0.9, còn LSTM có cổng quên bằng 0.99. Sau 100 bước, RNN chỉ còn khoảng ba phần nghìn của một phần trăm, còn LSTM vẫn còn khoảng 37 phần trăm. Chênh nhau hơn mười nghìn lần.
 
-Đặt f = 1: đường xanh nằm ngang, gradient không suy giảm. Đây là trường hợp CEC của bản 1997.
+Kéo cổng quên lên đúng 1 thì đường xanh nằm ngang: tín hiệu không mất chút nào. Đó chính là ô nhớ giữ nguyên năm 1997.
 
-Khác biệt nằm ở chỗ ga-ma của RNN phụ thuộc vào W h và tanh phẩy, rất khó giữ gần 1, còn f t là đầu ra của một cổng mà mạng có thể học để đặt gần 1 khi cần lưu thông tin.
+Điểm khác biệt cốt lõi: hệ số của RNN phụ thuộc trọng số và hàm tanh, rất khó giữ gần 1. Còn cổng quên của LSTM là thứ mạng có thể chủ động học để giữ gần 1 khi cần nhớ.
 -->
 
 ---
 
-# Liên hệ với ResNet
+# Ý tưởng quen thuộc: giống "lối tắt" trong ResNet
 
 <div class="grid grid-cols-2 gap-6 mt-4">
 <div class="p-4 rounded bg-amber-50">
 
 ### ResNet (2015)
+*Residual Network* – mạng có lối tắt, học được hơn 100 lớp
 
-$$x_{l+1} = x_l + F(x_l)$$
+<div class="text-center my-2">đầu ra = <b>đầu vào</b> + phần thay đổi</div>
 
-$$\frac{\partial x_{l+1}}{\partial x_l} = I + \frac{\partial F}{\partial x_l}$$
+<div class="text-sm opacity-70 text-center">
 
-$x_l$: đầu ra lớp $l$ · $F$: khối residual (conv–BN–ReLU) · $I$: ma trận đơn vị
+$x_{l+1} = x_l + F(x_l)$
 
-Skip connection theo **chiều sâu** (các lớp)
+</div>
+
+Lối tắt nối **lớp này sang lớp sau** (theo chiều sâu)
 
 </div>
 <div class="p-4 rounded bg-blue-50">
 
 ### LSTM (1997)
 
-$$c_t = f_t \odot c_{t-1} + i_t \odot \tilde c_t$$
+<div class="text-center my-2">bộ nhớ mới = <b>cổng quên × bộ nhớ cũ</b> + phần mới</div>
 
-$$\frac{\partial c_t}{\partial c_{t-1}} \approx \operatorname{diag}(f_t)$$
+<div class="text-sm opacity-70 text-center">
 
-Đường tương tự skip connection, theo **thời gian** (các bước); bằng $I$ khi $f_t = 1$
+$c_t = f_t \odot c_{t-1} + i_t \odot \tilde c_t$
+
+</div>
+
+Lối tắt nối **bước này sang bước sau** (theo thời gian); khi cổng quên = 1 thì giống hệt ResNet
 
 </div>
 </div>
 
 <div v-click class="mt-4 text-center">
-Cùng một nguyên lý: <b>phép cộng</b> tạo một đường truyền gradient không đi qua ma trận trọng số.<br>
-<span class="text-sm opacity-80">Highway Network (Srivastava, Greff, Schmidhuber 2015), tiền thân của ResNet, dùng cơ chế cổng của LSTM theo chiều sâu.</span>
+Cùng một nguyên lý: <b>phép cộng</b> tạo một lối tắt để tín hiệu lỗi đi thẳng, không bị nhân qua trọng số.<br>
+<span class="text-sm opacity-80">LSTM có ý tưởng này trước ResNet 18 năm; Highway Network (2015), tiền thân của ResNet, cũng do nhóm Schmidhuber đề xuất.</span>
 </div>
 
 <!--
 **[Người 3 · ~1.5 phút]**
 
-Slide này liên hệ với ResNet trong phần CNN các bạn đã học.
+Ý tưởng này các bạn thật ra đã gặp ở phần mạng tích chập, trong ResNet, viết tắt của Residual Network.
 
-Bên trái là ResNet. Khối residual tính x l cộng 1 bằng x l cộng F(x l), với x l là đầu ra của lớp l và F là các lớp bên trong khối. Đạo hàm bằng ma trận đơn vị I cộng với Jacobian của F. Nhờ số hạng I, gradient luôn có một đường truyền thẳng qua các lớp. Đó là lý do ResNet huấn luyện được mạng hơn 100 lớp.
+Bên trái là ResNet. Mỗi khối tính đầu ra bằng đầu vào cộng với một phần thay đổi. Nhờ phép cộng đó, tín hiệu lỗi luôn có một lối tắt đi thẳng qua khối mà không bị nhân với trọng số. Đó là lý do ResNet huấn luyện được mạng hơn 100 lớp.
 
-Bên phải là LSTM: c t bằng f t nhân từng phần tử c t trừ 1 cộng chấm chấm chấm. Đạo hàm theo đường trực tiếp là hàm đường chéo của f t. Khi f bằng 1 thì chính là ma trận đơn vị.
+Bên phải là LSTM: bộ nhớ mới bằng cổng quên nhân bộ nhớ cũ, cộng phần mới. Khi cổng quên bằng 1, nó giống hệt lối tắt của ResNet.
 
-[click] Hai mô hình dùng **cùng một nguyên lý**: phép cộng tạo một đường truyền gradient không đi qua ma trận trọng số. ResNet áp dụng theo chiều sâu, LSTM áp dụng theo chiều thời gian, và LSTM ra đời trước ResNet 18 năm. Ngoài ra, Highway Network, tiền thân trực tiếp của ResNet, do nhóm của Schmidhuber đề xuất và dùng cơ chế cổng của LSTM theo chiều sâu.
+[click] Hai mô hình dùng cùng một nguyên lý: phép cộng tạo ra một lối tắt cho tín hiệu lỗi. ResNet làm theo chiều sâu, từ lớp này sang lớp sau. LSTM làm theo chiều thời gian, từ bước này sang bước sau. Và LSTM có ý tưởng này trước ResNet tận 18 năm.
+
+Lý thuyết là vậy. Bây giờ mình kiểm tra trên dữ liệu thật.
 -->
 
 ---
 
-# Thí nghiệm 1: e-commerce, chuỗi ngắn (8 bước)
+# Thí nghiệm 1: đơn hàng online, chuỗi ngắn (8 bước)
 
 <div class="small mb-1">
 
-**Dữ liệu:** Pakistan's Largest E-Commerce Dataset, 407 nghìn đơn hàng của 115 nghìn khách (07/2016 → 08/2018) · **Bài toán:** khi khách đặt đơn, dự đoán đơn sẽ **completed / canceled / refunded** từ **8 đơn gần nhất** của khách (46 đặc trưng mỗi đơn) · train: đến hết 2017, validation: quý 1/2018, test: 04 → 08/2018
+**Dữ liệu:** 407 nghìn đơn hàng của một sàn thương mại điện tử ở Pakistan (2016–2018) · **Bài toán:** khi khách đặt đơn, đoán đơn sẽ được **giao xong / bị hủy / bị trả lại**, dựa trên **8 đơn gần nhất** của khách · học trên đơn đến hết 2017, kiểm tra trên đơn 04–08/2018
 
 </div>
 
 <div class="p-1 px-2 rounded bg-slate-100 small mb-2">
 
-**Giống nhau ở cả hai mô hình:** 2 lớp hồi quy (64 → 32 đơn vị) + `Linear`, Adam lr 1e-3, clip 1.0, chọn epoch theo validation loss, cùng thứ tự batch, chạy 5 seed · **chỉ khác:** `nn.RNN` ↔ `nn.LSTM`
+**Công bằng:** hai mô hình giống hệt nhau về kích thước và cách huấn luyện, **chỉ khác** RNN ↔ LSTM · mỗi mô hình huấn luyện **5 lần** với khởi tạo ngẫu nhiên khác nhau (*seed*), lấy trung bình
 
 </div>
 
 <div class="exp">
 
-| Chỉ số trên tập test (TB 5 seed) | <span class="crnn">RNN</span> | <span class="clstm">LSTM</span> | LSTM tốt hơn RNN cùng seed |
+| Kết quả trên dữ liệu kiểm tra (trung bình 5 lần) | <span class="crnn">RNN</span> | <span class="clstm">LSTM</span> | LSTM tốt hơn |
 |---|---|---|---|
-| Accuracy ↑ | 0.6628 ± 0.0037 | **0.6659** ± 0.0047 | **5/5** |
-| ROC-AUC ↑ | 0.7939 ± 0.0035 | **0.7969** ± 0.0029 | **5/5** |
-| MCC ↑ | 0.4089 ± 0.0051 | **0.4136** ± 0.0071 | **5/5** |
-| Macro F1 ↑ | **0.5106** ± 0.0042 | 0.5083 ± 0.0047 | 1/5 |
-| Recall lớp *refunded* ↑ | **0.092** ± 0.012 | 0.081 ± 0.016 | 1/5 |
-| Log loss ↓ | 0.7537 ± 0.0179 | 0.7535 ± 0.0140 | 2/5 |
-| Tham số · thời gian mỗi epoch | 10,307 · 4.3 s | 40,931 · 8.8 s | |
+| Tỉ lệ đoán đúng (*accuracy*) ↑ | 66.3% | **66.6%** | **5/5 lần** |
+| ROC-AUC¹ ↑ | 0.794 | **0.797** | **5/5 lần** |
+| Macro F1² ↑ | **0.511** | 0.508 | 1/5 lần |
+| Tỉ lệ tìm ra đơn bị trả lại ↑ | **9.2%** | 8.1% | 1/5 lần |
+| Số trọng số · thời gian mỗi vòng học | 10,307 · 4.3 giây | 40,931 · 8.8 giây | |
 
 </div>
 
+<div class="text-xs opacity-60 mt-1">¹ ROC-AUC (<i>Area Under the ROC Curve</i>): khả năng xếp đơn đúng loại lên trước, 0.5 = đoán mò, 1 = hoàn hảo · ² Macro F1: điểm trung bình của 3 loại đơn, coi loại hiếm (trả lại) quan trọng ngang loại phổ biến</div>
+
 <div v-click class="mt-2 p-2 rounded bg-amber-50 small">
 
-**LSTM tốt hơn, nhưng rất ít** (accuracy +0.3 điểm %) và **không ở mọi chỉ số**
-- **Chuỗi ngắn:** chỉ 8 bước, thông tin chủ yếu nằm ở đơn đang đặt và vài đơn gần nhất → không có phụ thuộc xa để cell state phát huy
-- Lớp *refunded* khó với cả hai: lúc đặt hàng, đơn bị trả lại trông giống một đơn hoàn thành; cổng của LSTM không giải quyết được điều đó
+**LSTM tốt hơn, nhưng rất ít** (+0.3% tỉ lệ đoán đúng) và **không phải ở mọi chỉ số** → chuỗi chỉ có 8 đơn, thông tin quan trọng nằm ở đơn đang đặt và vài đơn gần nhất, **không có gì ở xa** để bộ nhớ dài hạn phát huy
 
 </div>
 
 <!--
 **[Người 3 · ~1.5 phút]**
 
-Bây giờ là thực nghiệm. Nhóm so sánh LSTM với RNN trên hai bộ dữ liệu thật mà nhóm đã làm với RNN trong bài tập trước, và một bài toán tổng hợp.
+Nhóm so sánh LSTM với RNN trên ba thí nghiệm, xếp theo độ dài chuỗi tăng dần: 8 bước, 60 bước, rồi 100 bước. Ở mọi thí nghiệm, hai mô hình giống hệt nhau về kích thước và cách huấn luyện; điểm khác duy nhất là thay RNN bằng LSTM. Mỗi mô hình được huấn luyện 5 lần với khởi tạo ngẫu nhiên khác nhau, để chắc chắn kết quả không phải do may rủi.
 
-Ở cả hai bộ dữ liệu, hai mô hình **giống hệt nhau**: hai lớp hồi quy 64 và 32 đơn vị, cùng optimizer, cùng learning rate, cùng gradient clipping, cùng thứ tự batch. Thứ duy nhất khác là thay `nn.RNN` bằng `nn.LSTM`. Mỗi mô hình chạy 5 seed để thấy độ dao động. Nhóm cũng kiểm tra lại: RNN với seed 42 cho đúng con số của bài tập trước.
+Thí nghiệm thứ nhất dùng dữ liệu của một sàn thương mại điện tử ở Pakistan, khoảng 400 nghìn đơn hàng. Khi khách đặt một đơn, mô hình đoán đơn đó sẽ được giao xong, bị hủy, hay bị trả lại, dựa trên 8 đơn gần nhất của khách đó.
 
-Thí nghiệm thứ nhất: dữ liệu thương mại điện tử của Pakistan, khoảng 400 nghìn đơn hàng. Khi khách đặt một đơn, mô hình dự đoán đơn đó sẽ hoàn thành, bị hủy hay bị trả lại, dựa trên **8 đơn gần nhất** của khách. Dữ liệu chia theo thời gian.
+Kết quả: LSTM đoán đúng nhiều hơn, và ROC-AUC cao hơn. ROC-AUC là chỉ số đo khả năng xếp đúng loại đơn lên trước, 0.5 là đoán mò, 1 là hoàn hảo. LSTM hơn ở cả 5 lần chạy. Nhưng mức chênh rất nhỏ: chỉ khoảng 0.3 phần trăm. Và ở hai chỉ số liên quan tới đơn bị trả lại, LSTM còn kém hơn một chút.
 
-LSTM tốt hơn RNN ở accuracy, ROC-AUC và MCC, và tốt hơn ở **cả 5 seed**. Nhưng mức chênh rất nhỏ: accuracy chỉ tăng 0.3 điểm phần trăm. Ở macro F1 và recall của lớp bị trả lại, LSTM còn kém hơn một chút.
-
-[click] Lý do là chuỗi ở đây rất ngắn, chỉ 8 bước. Thông tin quan trọng nằm ở đơn đang đặt và vài đơn gần nhất, nên không có phụ thuộc xa để cell state phát huy. Còn lớp bị trả lại thì khó với cả hai mô hình, vì lúc đặt hàng nó trông giống hệt một đơn sẽ hoàn thành.
+[click] Lý do là chuỗi ở đây rất ngắn, chỉ 8 đơn. Thông tin quan trọng nằm ở chính đơn đang đặt và vài đơn gần nhất. Không có gì ở xa cần nhớ, nên bộ nhớ dài hạn của LSTM không có đất dụng võ.
 
 Vậy nếu chuỗi dài hơn thì sao? Đó là thí nghiệm thứ hai.
 -->
@@ -1057,22 +971,21 @@ Vậy nếu chuỗi dài hơn thì sao? Đó là thí nghiệm thứ hai.
 
 <div class="small mb-2">
 
-**Dữ liệu:** giá theo ngày của Apple, Microsoft, HP · **Bài toán:** dự báo **biên độ dao động ngày mai** $\ln(\text{High}/\text{Low})$ từ **60 ngày giao dịch** trước đó (9 đặc trưng mỗi ngày) · train: 1995–2016, validation: 2017–2019, test: 2020–2025 (4,467 cửa sổ) · cùng cấu hình như thí nghiệm 1, 5 seed
+**Dữ liệu:** giá theo ngày của Apple, Microsoft, HP · **Bài toán:** dự báo **ngày mai giá dao động mạnh hay nhẹ** (khoảng cách giữa giá cao nhất và thấp nhất trong ngày) từ **60 ngày giao dịch** trước đó · học trên 1995–2016, kiểm tra trên 2020–2025 · cách so sánh giống thí nghiệm 1
 
 </div>
 
 <div class="grid grid-cols-[1.05fr_1fr] gap-4 items-start">
 <div class="exp">
 
-| Test (TB 5 seed) | <span class="crnn">RNN</span> | <span class="clstm">LSTM</span> | LSTM tốt hơn |
+| Kiểm tra (trung bình 5 lần) | <span class="crnn">RNN</span> | <span class="clstm">LSTM</span> | LSTM tốt hơn |
 |---|---|---|---|
-| MAE ↓ (điểm %) | 0.7265 | **0.7092** | **5/5** |
-| RMSE ↓ | 1.163 | **1.139** | **5/5** |
-| R² (thang log) ↑ | 0.348 | **0.377** | **5/5** |
-| Đoán đúng hướng ↑ | 69.7% | **70.8%** | **5/5** |
-| Val loss tốt nhất ↓ | 0.522 | **0.505** | **5/5** |
-| Tham số | 7,873 | 31,393 | |
-| Thời gian / epoch | 2.0 s | 2.9 s | |
+| MAE¹ ↓ | 0.727 | **0.709** | **5/5 lần** |
+| RMSE² ↓ | 1.163 | **1.139** | **5/5 lần** |
+| R²³ ↑ | 0.348 | **0.377** | **5/5 lần** |
+| Đoán đúng ngày mai mạnh hơn hay nhẹ hơn ↑ | 69.7% | **70.8%** | **5/5 lần** |
+| Số trọng số | 7,873 | 31,393 | |
+| Thời gian mỗi vòng học | 2.0 giây | 2.9 giây | |
 
 </div>
 <div>
@@ -1082,111 +995,116 @@ Vậy nếu chuỗi dài hơn thì sao? Đó là thí nghiệm thứ hai.
 </div>
 </div>
 
+<div class="text-xs opacity-60 mt-1">¹ MAE (<i>Mean Absolute Error</i>): sai lệch trung bình, tính bằng điểm % · ² RMSE (<i>Root Mean Squared Error</i>): giống MAE nhưng phạt nặng các lần đoán sai nhiều · ³ R²: mô hình giải thích được bao nhiêu phần sự lên xuống, 1 = hoàn hảo</div>
+
 <div v-click class="mt-2 p-2 rounded bg-blue-50 small">
 
-**LSTM tốt hơn RNN ở mọi chỉ số, cả 5/5 seed:** MAE giảm 2.4%; seed tệ nhất của LSTM (MAE 0.7133) vẫn tốt hơn seed tốt nhất của RNN (0.7237). LSTM cũng **ổn định hơn**: độ lệch chuẩn của R² giữa các seed là 0.001, của RNN là 0.006
+**LSTM tốt hơn RNN ở mọi chỉ số, cả 5/5 lần:** sai số giảm 2.4%; lần chạy **tệ nhất** của LSTM vẫn tốt hơn lần **tốt nhất** của RNN. Kết quả của LSTM cũng **ổn định hơn** giữa các lần chạy
 
 </div>
 
 <!--
 **[Người 3 · ~2 phút]**
 
-Thí nghiệm thứ hai dùng giá cổ phiếu theo ngày của Apple, Microsoft và HP. Mô hình dự báo **biên độ dao động của ngày mai**, tức giá cao nhất chia giá thấp nhất trong ngày, từ **60 ngày giao dịch** trước đó. Nhóm chọn biên độ thay vì giá, vì biến động có tính "nhớ": ngày sôi động thường đi sau ngày sôi động, và tương quan này kéo dài nhiều tuần. Mô hình học trên dữ liệu từ 1995 đến 2016, và được đánh giá trên 6 năm từ 2020 đến 2025. Cấu hình giống hệt thí nghiệm 1.
+Thí nghiệm thứ hai dùng giá cổ phiếu theo ngày của Apple, Microsoft và HP. Mô hình nhìn 60 ngày giao dịch gần nhất và dự báo ngày mai giá sẽ dao động mạnh hay nhẹ, tức khoảng cách giữa giá cao nhất và thấp nhất trong ngày. Nhóm chọn bài toán này vì độ dao động có tính "nhớ": giai đoạn sôi động thường kéo dài nhiều tuần. Mô hình học trên dữ liệu từ 1995 đến 2016, và được kiểm tra trên 6 năm từ 2020 đến 2025.
 
-Bảng bên trái là trung bình 5 seed. LSTM tốt hơn ở **mọi chỉ số**: sai số tuyệt đối trung bình MAE giảm từ 0.727 xuống 0.709, R² tăng từ 0.35 lên 0.38, và đoán đúng hướng biến động nhiều hơn khoảng 1 điểm phần trăm.
+Bảng bên trái là trung bình 5 lần chạy. LSTM tốt hơn ở mọi chỉ số. Sai số trung bình, MAE, giảm từ 0.727 xuống 0.709. Chỉ số R², tức mô hình giải thích được bao nhiêu phần sự lên xuống, tăng từ 0.35 lên 0.38. Và LSTM đoán đúng ngày mai dao động mạnh hơn hay nhẹ hơn nhiều hơn khoảng 1 phần trăm.
 
-**(Demo: bấm qua các chỉ số MAE, RMSE, R²)** Hình bên phải vẽ từng seed: mỗi chấm là một lần huấn luyện. Năm chấm xanh của LSTM và năm chấm cam của RNN **tách hẳn nhau**, không chồng lên nhau.
+**(Demo: bấm qua các chỉ số)** Hình bên phải vẽ riêng từng lần chạy, mỗi chấm là một lần. Năm chấm xanh của LSTM và năm chấm cam của RNN tách hẳn nhau, không chồng lên nhau.
 
-[click] Nghĩa là LSTM tốt hơn ở cả 5 trên 5 seed. Seed tệ nhất của LSTM vẫn tốt hơn seed tốt nhất của RNN. LSTM cũng ổn định hơn: kết quả giữa các seed dao động ít hơn khoảng 6 lần. Đổi lại, LSTM có gấp 4 lần tham số và mỗi epoch chậm hơn khoảng 1.5 lần.
+[click] Nghĩa là: lần chạy tệ nhất của LSTM vẫn tốt hơn lần chạy tốt nhất của RNN. Kết quả của LSTM cũng ổn định hơn giữa các lần. Cái giá phải trả là LSTM có gấp 4 lần trọng số và chạy chậm hơn khoảng một lần rưỡi.
 
-Câu hỏi tiếp theo: vì sao LSTM tốt hơn ở đây?
+Vậy vì sao LSTM tốt hơn ở đây?
 -->
 
 ---
 
-# Vì sao? LSTM dùng được những ngày xa hơn
+# Vì sao? LSTM dùng được cả những ngày ở xa
 
 <StockReach />
 
 <div v-click class="mt-2 p-2 rounded bg-blue-50 small">
 
-**RNN:** ảnh hưởng của ngày 1 lên dự báo chỉ còn ≈ $10^{-4}$ so với ngày 60, đúng hiện tượng gradient biến mất ở slide 5 → 40 ngày đầu gần như bị bỏ qua (3.7%); cửa sổ 120 ngày cho kết quả **y hệt** cửa sổ 60 ngày. **LSTM:** đường qua cell state (slide 19) giữ tín hiệu lớn hơn ≈ 75 lần → 25% độ nhạy đến từ 40 ngày đầu. Thông tin quan trọng nhất vẫn ở ~20 ngày gần nhất, nhưng LSTM tốt hơn RNN **ở mọi độ dài cửa sổ**
+**RNN:** ngày đầu tiên trong 60 ngày chỉ còn ảnh hưởng **0.014%** so với hôm nay → 40 ngày cũ gần như bị bỏ qua; cho xem 120 ngày cũng ra kết quả **y hệt** 60 ngày (đúng hiện tượng tín hiệu lỗi biến mất ở slide 5). **LSTM:** ngày đầu tiên vẫn còn ảnh hưởng **1.1%**, gấp khoảng 75 lần; **25%** ảnh hưởng đến từ 40 ngày cũ. Thông tin quan trọng nhất vẫn nằm ở khoảng 20 ngày gần đây, nhưng LSTM tốt hơn RNN **dù cho xem bao nhiêu ngày**
 
 </div>
 
 <!--
 **[Người 3 · ~1.5 phút]**
 
-Để trả lời, nhóm đo xem dự báo thay đổi bao nhiêu khi thay đổi dữ liệu của từng ngày trong cửa sổ, tức đạo hàm của đầu ra theo đầu vào ở từng ngày. Đạo hàm này đi ngược qua các bước thời gian, nên chính là thứ bị biến mất ở RNN.
+Để trả lời, nhóm đo xem mỗi ngày trong 60 ngày ảnh hưởng tới dự báo bao nhiêu: thay đổi dữ liệu của một ngày một chút, rồi xem dự báo thay đổi bao nhiêu.
 
-**(Demo: hình 1, độ nhạy theo ngày)** Trục tung là thang log, so với ngày gần nhất. Đường cam của RNN rơi rất nhanh: ở ngày đầu tiên của cửa sổ chỉ còn khoảng một phần mười nghìn. Đường xanh của LSTM giảm chậm hơn nhiều, ở ngày đầu vẫn còn khoảng một phần trăm, lớn hơn RNN khoảng 75 lần. Bảng bên phải: chỉ 3.7% độ nhạy của RNN đến từ 40 ngày đầu, còn ở LSTM là 25%.
+**(Demo: tab 1)** Trục ngang là 60 ngày, ngày 60 là hôm nay. Trục dọc là mức ảnh hưởng so với hôm nay. Đường cam của RNN tụt rất nhanh: ngày đầu tiên chỉ còn ảnh hưởng khoảng một phần mười nghìn so với hôm nay. Đường xanh của LSTM tụt chậm hơn nhiều, ngày đầu tiên vẫn còn khoảng một phần trăm, gấp khoảng 75 lần RNN. Bảng bên phải: chỉ 3.7 phần trăm ảnh hưởng của RNN đến từ 40 ngày cũ, còn ở LSTM là 25 phần trăm.
 
-**(Demo: hình 2, chỉ giữ k ngày gần nhất)** Xóa dữ liệu của các ngày cũ rồi chạy lại. Với RNN, từ 20 ngày trở đi, thêm ngày cũ không làm sai số thay đổi chút nào. LSTM thì ngược lại: nếu chỉ giữ 5 hay 10 ngày, LSTM còn sai nhiều hơn RNN, vì nó đã học cách dựa vào những ngày cũ; bỏ những ngày đó đi thì nó mất thông tin. Từ 20 ngày trở lên thì LSTM tốt hơn RNN.
+**(Demo: tab 2)** Nhóm thử xóa dữ liệu của các ngày cũ rồi cho dự báo lại. Với RNN, giữ 20 ngày hay 60 ngày cũng như nhau, các ngày cũ không đóng góp gì. Với LSTM thì ngược lại: nếu chỉ giữ 5 hay 10 ngày, LSTM còn sai nhiều hơn RNN, vì nó đã quen dựa vào những ngày cũ, bỏ đi thì nó mất thông tin. Từ 20 ngày trở lên thì LSTM tốt hơn RNN.
 
-**(Demo: hình 3, độ dài cửa sổ)** Khi huấn luyện lại với cửa sổ 120 ngày, RNN cho kết quả y hệt cửa sổ 60 ngày: 60 ngày thêm vào không truyền được gradient về. Nhóm cũng phải nói rõ: với dữ liệu này, cửa sổ 20 ngày cho kết quả tốt nhất ở cả hai mô hình, vì thông tin quan trọng nhất nằm trong khoảng một tháng gần đây. Nhưng ở cả ba độ dài, LSTM đều tốt hơn RNN.
+**(Demo: tab 3)** Nhóm huấn luyện lại với 20, 60 và 120 ngày. RNN với 120 ngày cho kết quả y hệt 60 ngày: 60 ngày thêm vào hoàn toàn vô ích, vì tín hiệu lỗi không đi ngược xa được tới đó. Nhóm cũng phải nói thật: với dữ liệu này, cho xem 20 ngày là tốt nhất ở cả hai mô hình, vì thông tin quan trọng nhất nằm trong khoảng một tháng gần đây. Nhưng ở cả ba trường hợp, LSTM đều tốt hơn RNN.
 
-[click] Tóm lại: RNN gặp đúng hiện tượng gradient biến mất ở slide 5, còn LSTM nhờ đường truyền qua cell state ở slide 19 nên giữ được tín hiệu từ những ngày xa.
+[click] Tóm lại: RNN gặp đúng hiện tượng tín hiệu lỗi biến mất ở slide 5, còn LSTM nhờ con đường thẳng qua bộ nhớ nên vẫn nghe được tín hiệu từ những ngày xa.
 -->
 
 ---
 
-# Thí nghiệm 3: phụ thuộc rất xa (Adding Problem)
+# Thí nghiệm 3: phải nhớ rất xa (bài toán cộng)
 
-<div class="text-sm mb-2"><b>Adding Problem</b>: chuỗi độ dài T, mỗi bước gồm (số ngẫu nhiên ~ U(0, 1), cờ 0/1); đúng 2 vị trí có cờ 1, một ở nửa đầu, một ở nửa sau → dự đoán <b>tổng 2 số tại đó</b>. Cùng cấu hình: hidden size 64, Adam lr 1e-3, batch 64, 5000 bước, clip 1.0</div>
+<div class="text-sm mb-2"><b>Bài toán cộng</b> (<i>Adding Problem</i>, có trong bài báo 1997): một chuỗi gồm nhiều số ngẫu nhiên từ 0 đến 1, trong đó <b>đúng 2 số được đánh dấu</b>, một số ở nửa đầu, một số ở nửa sau → mô hình phải trả lời <b>tổng của 2 số đó</b>. Chuỗi 100 số nghĩa là phải nhớ số đầu tiên qua ít nhất 50 bước.</div>
 
 <CompareChart />
 
 <div v-click class="mt-2 p-2 rounded bg-blue-50 small">
 
-**Vì sao LSTM tốt hơn ở đây:** với T = 100, tín hiệu lỗi phải truyền ngược ít nhất 50 bước. RNN: gradient là tích các $\operatorname{diag}(\tanh')\,W_h$ → biến mất (slide 5), loss đứng ở mức cơ sở. LSTM: đường trực tiếp qua cell state chỉ nhân với $f_t$ (slide 19) → gradient vẫn truyền về được.
+**Chuỗi 100 số:** RNN đứng yên ở mức "đoán mò" suốt quá trình học, vì tín hiệu lỗi không về tới số được đánh dấu đầu tiên. LSTM sau một thời gian thì "vỡ lẽ" và giảm sai số xuống gần 0.
 
-**Tổng hợp 3 thí nghiệm:** chuỗi càng dài, LSTM càng hơn RNN rõ: 8 bước → hơn rất ít · 60 bước → hơn ở mọi chỉ số, 5/5 seed · 100 bước → RNN không học được, LSTM học được
+**Tổng hợp 3 thí nghiệm:** chuỗi càng dài, LSTM càng hơn RNN rõ: 8 bước → hơn rất ít · 60 bước → hơn ở mọi chỉ số, cả 5/5 lần · 100 bước → RNN không học được, LSTM học được
 
 </div>
 
 <!--
 **[Người 3 · ~1.5 phút]**
 
-Thí nghiệm thứ ba đẩy độ dài lên mức cực đoan, và được thiết kế để có phụ thuộc xa. Bài toán là Adding Problem, một bài toán chuẩn có trong bài báo năm 1997. Đầu vào là một chuỗi độ dài T; mỗi bước gồm một số ngẫu nhiên phân phối đều trong khoảng 0 đến 1 và một cờ đánh dấu. Có đúng hai vị trí được đánh dấu, và mô hình phải dự đoán tổng của hai số tại đó. Vị trí thứ nhất luôn nằm ở nửa đầu chuỗi, nên mô hình phải lưu giá trị đó qua ít nhất T/2 bước. Mô hình cơ sở luôn dự đoán hằng số 1, bằng kỳ vọng của tổng, có MSE bằng phương sai của tổng, tức 1/6 xấp xỉ 0.167; đó là đường nét đứt.
+Thí nghiệm thứ ba đẩy độ dài lên mức cực đoan. Đây là bài toán cộng, một bài toán kinh điển có trong chính bài báo năm 1997. Mô hình đọc một chuỗi số ngẫu nhiên, trong đó có đúng hai số được đánh dấu: một số ở nửa đầu, một số ở nửa sau. Nhiệm vụ là trả lời tổng của hai số đó. Với chuỗi 100 số, mô hình phải nhớ số được đánh dấu đầu tiên qua ít nhất 50 bước.
 
-**(Bấm T = 10)** Với chuỗi ngắn, **cả hai đều học được**: loss của cả hai giảm xuống dưới đường cơ sở. Test MSE của RNN khoảng 0.0012, của LSTM là 0.0001. Giống thí nghiệm 1, khi phụ thuộc ngắn thì RNN cũng giải được.
+Đường nét đứt là mức "đoán mò": luôn trả lời tổng bằng 1, là giá trị trung bình. Mô hình nào nằm trên đường này là chưa học được gì.
 
-**(Bấm T = 100)** Với chuỗi dài, **loss của RNN nằm ở mức đường cơ sở** suốt 5000 bước: test MSE là 0.163, xấp xỉ 0.167 của mô hình cơ sở, nghĩa là RNN không học được phụ thuộc cần thiết. Loss của LSTM cũng nằm quanh mức cơ sở trong khoảng 2500 bước đầu, sau đó giảm nhanh và kết thúc ở test MSE 0.0033, thấp hơn RNN khoảng **50 lần**.
+**(Bấm "Chuỗi 10 số")** Với chuỗi ngắn, cả hai mô hình đều học được, sai số giảm xuống dưới mức đoán mò. Giống thí nghiệm 1: khi không cần nhớ xa thì RNN cũng làm được.
 
-[click] Lý do đúng như phần toán đã chỉ ra. Với T = 100, tín hiệu lỗi từ đầu ra phải truyền ngược ít nhất 50 bước để tới vị trí được đánh dấu đầu tiên. Ở RNN, gradient là tích của 50 ma trận đường chéo của tanh phẩy, nhân W h, nên biến mất, và loss đứng yên ở mức cơ sở. Ở LSTM, đường trực tiếp qua cell state chỉ nhân với f t; mạng học cách giữ f t gần 1 nên gradient vẫn truyền về được.
+**(Bấm "Chuỗi 100 số")** Với chuỗi dài, đường cam của RNN nằm yên ở mức đoán mò suốt quá trình học: RNN không học được gì. LSTM cũng loay hoay ở mức đó một thời gian, rồi đến khoảng giữa quá trình thì "vỡ lẽ", sai số tụt xuống gần 0. Sai số cuối cùng của LSTM thấp hơn RNN khoảng 50 lần.
 
-Tóm lại ba thí nghiệm: **chuỗi càng dài thì LSTM càng hơn RNN rõ**. Với 8 bước, LSTM chỉ hơn rất ít. Với 60 bước, LSTM hơn ở mọi chỉ số và ở cả 5 seed. Với 100 bước, RNN không học được còn LSTM học được. Cái giá là LSTM có gấp 4 lần tham số và chạy chậm hơn. Sang phần cuối, bạn An sẽ nói về cách dùng LSTM trong thực tế.
+[click] Tóm lại ba thí nghiệm: chuỗi càng dài thì LSTM càng hơn RNN rõ. 8 bước: hơn rất ít. 60 bước: hơn ở mọi chỉ số, cả 5 lần chạy. 100 bước: RNN không học được, LSTM học được. Đổi lại, LSTM có gấp 4 lần trọng số và chạy chậm hơn. Sang phần cuối, bạn An sẽ nói về cách dùng LSTM trong thực tế.
 -->
 
 ---
 
-# Hệ quả khi cài đặt
+
+# Hai mẹo khi tự cài đặt LSTM
 
 <div class="grid grid-cols-2 gap-6 mt-2">
 <div>
 
-### 1 · Khởi tạo forget bias = 1
+### 1 · Cho cổng quên "hơi mở" từ đầu
 
-Khi trọng số khởi tạo nhỏ, $f_t \approx \sigma(b_f)$: với $b_f = 1$ thì $f_t \approx 0.73$ thay vì $0.5$ → mặc định **giữ lại** cell state, gần với bản 1997 ($f \equiv 1$)
+Lúc mới khởi tạo, cổng quên ≈ 0.5 → mỗi bước mất một nửa bộ nhớ. Đặt sẵn độ lệch (*bias*) của cổng quên = 1 → cổng quên ≈ 0.73 → mạng **có xu hướng nhớ** ngay từ đầu
 
 ```python
 for name, p in lstm.named_parameters():
     if 'bias_ih' in name:
         h = p.size(0) // 4
-        p.data[h:2*h].fill_(1.0)  # thứ tự i, f, g, o
+        # PyTorch xếp các cổng theo thứ tự:
+        # ghi, quên, nội dung mới, đọc
+        p.data[h:2*h].fill_(1.0)  # phần của cổng quên
 ```
 
 </div>
 <div v-click>
 
-### 2 · Vẫn cần gradient clipping
+### 2 · Vẫn cần "cắt" tín hiệu lỗi quá lớn
 
-Đường trực tiếp khắc phục gradient **biến mất**, nhưng các số hạng **gián tiếp** (chứa $W$) vẫn có thể **bùng nổ**
+Con đường thẳng qua bộ nhớ chữa được việc tín hiệu **biến mất**, nhưng các "đường vòng" vẫn có thể làm tín hiệu **bùng nổ** → giới hạn độ lớn tín hiệu lỗi (*gradient clipping*)
 
 ```python
 loss.backward()
-torch.nn.utils.clip_grad_norm_(
-    model.parameters(), max_norm=1.0)
+torch.nn.utils.clip_grad_norm_(   # nếu tín hiệu lớn hơn 1
+    model.parameters(), max_norm=1.0)  # thì thu nhỏ lại
 optimizer.step()
 ```
 
@@ -1196,42 +1114,42 @@ optimizer.step()
 <!--
 **[Người 4 · ~1.5 phút]**
 
-Cảm ơn Hiếu. Phần cuối nói về cách dùng LSTM trong thực tế, bắt đầu từ hai quy tắc khi cài đặt rút ra từ phân tích gradient ở phần trước.
+Cảm ơn Hiếu. Phần cuối nói về cách dùng LSTM trong thực tế, bắt đầu từ hai mẹo khi cài đặt, rút ra trực tiếp từ những gì các bạn vừa nghe.
 
-Thứ nhất: **khởi tạo bias của forget gate bằng 1**, theo khuyến nghị của Jozefowicz và cộng sự năm 2015. Khi trọng số còn nhỏ, f t xấp xỉ xích-ma(b f). Nếu bias bằng 0 thì f xấp xỉ xích-ma(0) bằng 0.5, mỗi bước cell state mất khoảng một nửa giá trị, và gradient theo đường trực tiếp giảm theo 0.5 mũ T. Đặt bias bằng 1 thì f xấp xỉ 0.73, nên ngay từ đầu cell state được giữ lại nhiều hơn. Trong PyTorch, bias được xếp theo thứ tự i, f, g, o, nên phần của forget gate là đoạn thứ hai, chỉ số từ h đến 2h.
+Mẹo thứ nhất: cho cổng quên hơi mở ngay từ đầu. Lúc mới khởi tạo, trọng số còn nhỏ nên cổng quên thường nằm quanh 0.5, tức mỗi bước mạng mất một nửa bộ nhớ, và tín hiệu lỗi cũng yếu đi một nửa mỗi bước. Nếu đặt sẵn độ lệch, tức bias, của cổng quên bằng 1, thì cổng quên khởi đầu ở khoảng 0.73, mạng có xu hướng nhớ ngay từ đầu. Đây là khuyến nghị của một nhóm nghiên cứu ở Google năm 2015. Trong PyTorch, độ lệch của bốn phần được xếp liền nhau theo thứ tự: cổng ghi, cổng quên, nội dung mới, cổng đọc, nên phần của cổng quên là đoạn thứ hai.
 
-[click] Thứ hai: **vẫn phải dùng gradient clipping**. Đường trực tiếp chỉ khắc phục gradient **biến mất**. Các số hạng gián tiếp ở slide 19 vẫn chứa ma trận W, nên gradient vẫn có thể **bùng nổ**. `clip_grad_norm_` chuẩn hóa lại vector gradient khi chuẩn của nó vượt `max_norm`, giúp tránh loss trở thành NaN.
+[click] Mẹo thứ hai: vẫn phải giới hạn độ lớn của tín hiệu lỗi, gọi là gradient clipping. Con đường thẳng qua bộ nhớ chỉ chữa được việc tín hiệu biến mất. Các đường vòng giống RNN vẫn có thể làm tín hiệu phình to, tức bùng nổ. Hàm clip grad norm làm đúng một việc: nếu tín hiệu lớn hơn ngưỡng, ở đây là 1, thì thu nhỏ nó lại. Nhờ đó quá trình học không bị hỏng giữa chừng. Cả ba thí nghiệm của nhóm đều dùng cách này.
 -->
 
 ---
 
-# Stacked & Bidirectional LSTM
+# Xếp chồng và đọc hai chiều
 
 <div class="grid grid-cols-2 gap-6">
 <div>
 
-### Stacked: xếp chồng nhiều lớp
-Chuỗi $h_1, \dots, h_T$ của lớp 1 là chuỗi đầu vào của lớp 2 → lớp trên học đặc trưng trừu tượng hơn
+### Xếp chồng (*stacked*): nhiều lớp LSTM
+Đầu ra từng bước của lớp 1 là đầu vào của lớp 2 → lớp trên hiểu ý nghĩa "trừu tượng" hơn, giống CNN nhiều lớp
 
-### Bidirectional: chạy 2 chiều
-$$h_t = [\,\overrightarrow{h}_t\,;\,\overleftarrow{h}_t\,]$$
-$\overrightarrow{h}_t$: LSTM chạy từ trái sang phải, $\overleftarrow{h}_t$: chạy từ phải sang trái → $h_t$ phụ thuộc cả $x_{1..t}$ **và** $x_{t..T}$
+### Hai chiều (*bidirectional*)
+Một LSTM đọc **từ trái sang phải**, một LSTM đọc **từ phải sang trái**, rồi ghép kết quả → mỗi từ được hiểu nhờ **cả phần trước lẫn phần sau** của câu
 
-<div v-click class="text-red-600 text-sm mt-2">⚠️ Không dùng bidirectional khi tại thời điểm dự đoán chưa có dữ liệu tương lai (<b>dự báo chuỗi thời gian</b>, sinh văn bản): mô hình sẽ dùng thông tin không có lúc suy luận (rò rỉ dữ liệu)</div>
+<div v-click class="text-red-600 text-sm mt-2">⚠️ Không dùng hai chiều khi phải dự đoán tương lai (<b>dự báo giá</b>, viết tiếp câu): lúc học mô hình được "nhìn trước" tương lai, nhưng lúc dùng thật thì không có → kết quả học được là ảo (rò rỉ dữ liệu)</div>
 
 </div>
 <div>
 
 ```python
 lstm = nn.LSTM(input_size=d, hidden_size=h,
-               num_layers=2,          # stacked
-               bidirectional=True,    # 2 chiều
-               batch_first=True, dropout=0.2)
+               num_layers=2,          # xếp chồng 2 lớp
+               bidirectional=True,    # đọc 2 chiều
+               batch_first=True,
+               dropout=0.2)           # chống học vẹt
 
-output, (h_n, c_n) = lstm(x)   # x: (B, T, d)
-# output: (B, T, 2h)   lớp cuối, mọi bước
-# h_n:    (2*2, B, h)  trạng thái cuối mỗi lớp×chiều
-# (shape của h_n không đổi theo batch_first)
+output, (h_n, c_n) = lstm(x)
+# output: đầu ra từng bước của lớp trên cùng,
+#         chiều cuối = 2h vì ghép 2 chiều
+# h_n, c_n: đầu ra và bộ nhớ ở bước cuối
 ```
 
 </div>
@@ -1240,44 +1158,44 @@ output, (h_n, c_n) = lstm(x)   # x: (B, T, d)
 <!--
 **[Người 4 · ~1.5 phút]**
 
-Hai cách mở rộng hay dùng nhất.
+Hai cách mở rộng LSTM hay dùng nhất.
 
-**Stacked LSTM**: xếp nhiều lớp LSTM chồng lên nhau. Chuỗi hidden state h 1, chấm chấm chấm, h T của lớp dưới là chuỗi đầu vào của lớp trên. Tương tự CNN nhiều lớp, lớp trên học được đặc trưng trừu tượng hơn.
+Thứ nhất là xếp chồng nhiều lớp. Đầu ra ở từng bước của lớp LSTM thứ nhất trở thành đầu vào của lớp thứ hai. Giống CNN nhiều lớp, lớp càng cao thì hiểu ý nghĩa càng trừu tượng.
 
-**Bidirectional LSTM**: dùng hai LSTM độc lập, một chạy từ trái sang phải, một chạy từ phải sang trái, rồi ghép hai hidden state tại mỗi bước. Như vậy biểu diễn tại bước t phụ thuộc vào cả phần trước lẫn phần sau của chuỗi. Cách này phù hợp cho phân loại văn bản hay gán nhãn từ loại, khi toàn bộ chuỗi có sẵn trước khi dự đoán.
+Thứ hai là đọc hai chiều. Dùng hai LSTM riêng: một cái đọc câu từ trái sang phải, một cái đọc từ phải sang trái, rồi ghép kết quả lại. Như vậy mỗi từ được hiểu nhờ cả phần trước lẫn phần sau của câu. Cách này hợp với các bài toán có sẵn cả câu, ví dụ phân loại một bình luận là khen hay chê.
 
-[click] Lưu ý: **không** dùng bidirectional khi tại thời điểm dự đoán chưa có dữ liệu tương lai, ví dụ dự báo giá cổ phiếu. Khi huấn luyện, mô hình sẽ dùng thông tin từ tương lai, là thông tin không có khi triển khai; đây là rò rỉ dữ liệu.
+[click] Nhưng lưu ý: không dùng hai chiều khi phải dự đoán tương lai, ví dụ dự báo giá cổ phiếu như thí nghiệm 2. Lúc học, mô hình sẽ được nhìn trước dữ liệu tương lai, nhưng lúc dùng thật thì không có. Kết quả trong lúc học sẽ đẹp một cách ảo. Lỗi này gọi là rò rỉ dữ liệu.
 
-Bên phải là code PyTorch. Chỉ cần hai tham số `num_layers` và `bidirectional`; `dropout` được áp dụng giữa các lớp. Chú ý **shape**: `output` có chiều cuối là 2h vì ghép hai chiều; chiều đầu của `h_n` bằng số lớp nhân số chiều, ở đây là 4, và `h_n` luôn có batch ở chiều thứ hai dù đặt `batch_first=True`. Đây là chỗ hay bị lỗi shape nhất.
+Bên phải là code PyTorch: chỉ cần hai tham số, số lớp và hai chiều. Dropout là tắt ngẫu nhiên 20 phần trăm kết nối giữa các lớp để chống học vẹt. Đầu ra có chiều cuối gấp đôi vì ghép hai chiều; đây là chỗ hay bị lỗi kích thước nhất khi nối với lớp phía sau.
 -->
 
 ---
 
-# Ứng dụng & giới hạn
+# LSTM dùng để làm gì, và giới hạn của nó
 
 <div class="grid grid-cols-2 gap-6">
 <div>
 
 ### Ứng dụng
-- **many-to-one** (chuỗi → một nhãn): phân loại cảm xúc, phân loại chuỗi
-- **many-to-many** (mỗi bước một nhãn): gán nhãn từ loại, nhận dạng giọng nói
-- **seq2seq**: dịch máy (encoder–decoder)
+- **Cả chuỗi → một nhãn** (*many-to-one*): bình luận khen hay chê, đơn hàng có bị hủy không
+- **Mỗi bước một nhãn** (*many-to-many*): nhận dạng giọng nói, gán từ loại
+- **Chuỗi → chuỗi** (*seq2seq*): dịch máy
 - **Chuỗi thời gian**: dự báo nhu cầu, cảm biến, tài chính
-- **Sinh dữ liệu**: văn bản, nhạc, chữ viết tay
+- **Sinh dữ liệu**: viết văn bản, sáng tác nhạc, chữ viết tay
 
 </div>
 <div>
 
 ### Giới hạn
-- Tính **tuần tự**: bước t phải chờ bước t−1, nên **không song song hóa** theo thời gian được
-- Chuỗi rất dài (hàng nghìn token): toàn bộ ngữ cảnh phải nén vào vector $c_t, h_t$ kích thước cố định
-- Nhiều tham số hơn RNN gấp 4 lần
+- Phải đọc **lần lượt**: bước sau phải chờ bước trước → **không chạy song song** được trên GPU (*Graphics Processing Unit* – card đồ họa)
+- Chuỗi rất dài (hàng nghìn từ): mọi thứ phải nhồi vào **một bộ nhớ có kích thước cố định**
+- Gấp **4 lần** trọng số so với RNN
 
 <div v-click class="mt-4 p-3 rounded bg-slate-100">
 
-→ **Attention** (2014) → **Transformer** (2017): bỏ cơ chế truy hồi, mỗi vị trí tính trọng số attention trực tiếp tới mọi vị trí khác
+→ **Attention** (2014) → **Transformer** (2017): bỏ cách đọc lần lượt, mỗi từ **nhìn thẳng** vào mọi từ khác trong câu
 
-<span class="text-sm">Mô hình chuỗi: RNN (1990) → LSTM (1997) → Transformer (2017)</span>
+<span class="text-sm">Dòng phát triển: RNN (1990) → LSTM (1997) → Transformer (2017)</span>
 
 </div>
 </div>
@@ -1286,11 +1204,11 @@ Bên phải là code PyTorch. Chỉ cần hai tham số `num_layers` và `bidire
 <!--
 **[Người 4 · ~1.5 phút]**
 
-Ứng dụng của LSTM có thể phân loại theo dạng đầu vào và đầu ra. **Many-to-one**: cả chuỗi cho ra một nhãn, ví dụ phân loại cảm xúc. **Many-to-many**: mỗi bước một nhãn, ví dụ gán nhãn từ loại. **Seq2seq**: một LSTM encoder đọc câu nguồn, một LSTM decoder sinh câu đích; Google Translate dùng kiến trúc này, kết hợp attention, từ năm 2016. Ngoài ra LSTM được dùng nhiều cho chuỗi thời gian.
+LSTM được dùng ở đâu? Có thể chia theo dạng đầu vào và đầu ra. Cả chuỗi cho ra một nhãn, ví dụ đọc một bình luận rồi đoán là khen hay chê, hoặc như thí nghiệm 1 của nhóm: đọc lịch sử đơn hàng rồi đoán đơn có bị hủy không. Mỗi bước một nhãn, ví dụ nhận dạng giọng nói. Chuỗi sang chuỗi, ví dụ dịch máy: một LSTM đọc câu nguồn, một LSTM viết câu đích, Google Dịch từng dùng cách này. Ngoài ra LSTM được dùng rất nhiều cho chuỗi thời gian và để sinh dữ liệu như văn bản hay nhạc.
 
-LSTM cũng có giới hạn. Lớn nhất là tính **tuần tự**: muốn tính bước t phải có kết quả bước t trừ 1, nên không song song hóa được theo chiều thời gian trên GPU. Với chuỗi rất dài, toàn bộ ngữ cảnh phải được nén vào vector trạng thái có kích thước cố định.
+LSTM cũng có giới hạn. Lớn nhất là phải đọc lần lượt: muốn tính bước sau thì phải có kết quả bước trước, nên không tận dụng được sức chạy song song của card đồ họa. Với chuỗi rất dài, mọi thứ phải nhồi vào một bộ nhớ có kích thước cố định. Và nó có gấp 4 lần trọng số so với RNN.
 
-[click] Đó là lý do Attention, và sau đó Transformer năm 2017, ra đời: bỏ cơ chế truy hồi, mỗi vị trí tính trọng số attention trực tiếp tới mọi vị trí khác. Đây là chủ đề cho một buổi khác. Trong nhánh mô hình xử lý chuỗi, thứ tự phát triển là RNN, LSTM, rồi Transformer.
+[click] Đó là lý do Attention, rồi Transformer năm 2017 ra đời: bỏ cách đọc lần lượt, mỗi từ nhìn thẳng vào mọi từ khác trong câu. Đó là chủ đề cho một buổi khác. Dòng phát triển của các mô hình xử lý chuỗi là: RNN, rồi LSTM, rồi Transformer.
 -->
 
 ---
@@ -1300,17 +1218,17 @@ LSTM cũng có giới hạn. Lớn nhất là tính **tuần tự**: muốn tín
 <div class="grid grid-cols-3 gap-3 text-center text-sm">
 <div class="p-1 rounded bg-blue-50">
 
-<b>🧠 Cell state $c_t$</b>: bộ nhớ dài hạn, cập nhật bằng phép nhân từng phần tử và phép cộng
+<b>🧠 Bộ nhớ dài hạn</b> (trạng thái ô nhớ): chạy thẳng như băng chuyền, chỉ bị xóa bớt và cộng thêm
 
 </div>
 <div class="p-1 rounded bg-green-50">
 
-<b>🚪 3 cổng f, i, o</b>: xóa · ghi · đọc, đều dùng sigmoid
+<b>🚪 3 cổng</b>: quên · ghi · đọc, mỗi cổng là một "cái van" mở từ 0 đến 1
 
 </div>
 <div class="p-1 rounded bg-amber-50">
 
-<b>➕ Phép cộng</b>: $\partial c_t / \partial c_{t-1} \approx \operatorname{diag}(f_t)$ → gradient không biến mất
+<b>➕ Phép cộng</b>: tạo con đường thẳng cho tín hiệu lỗi → học được những gì ở xa; chuỗi càng dài càng hơn RNN
 
 </div>
 </div>
@@ -1324,19 +1242,21 @@ LSTM cũng có giới hạn. Lớn nhất là tính **tuần tự**: muốn tín
 
 Tóm lại bài hôm nay bằng ba ý.
 
-Một: LSTM thêm vào RNN một **cell state**, đóng vai trò bộ nhớ dài hạn.
-Hai: **ba cổng** forget, input, output, đều dùng sigmoid, quyết định tỉ lệ xóa, ghi và đọc cell state.
-Ba: nhờ **phép cộng** trong cập nhật cell state, gradient có một đường truyền trực tiếp chỉ nhân với f t, nên không bị biến mất như ở RNN.
+Một: LSTM thêm vào RNN một bộ nhớ dài hạn, gọi là trạng thái ô nhớ. Nó chạy thẳng qua các bước như một băng chuyền, chỉ bị xóa bớt và cộng thêm.
+
+Hai: ba cổng quên, ghi và đọc, mỗi cổng là một cái van mở từ 0 đến 1, quyết định xóa bao nhiêu, ghi bao nhiêu, đọc ra bao nhiêu.
+
+Ba: nhờ phép cộng trong cách cập nhật bộ nhớ, tín hiệu lỗi có một con đường thẳng để đi ngược về quá khứ, nên LSTM học được những gì ở xa. Ba thí nghiệm của nhóm cho thấy chuỗi càng dài thì LSTM càng hơn RNN rõ.
 
 Bây giờ là bốn câu hỏi trắc nghiệm nhanh. Mời các bạn chọn đáp án, mình sẽ bấm vào đáp án được chọn: ô chuyển xanh là đúng, đỏ là sai; nếu sai thì mời bạn khác chọn lại. Khi chọn đúng, lời giải hiện ra bên dưới.
 
-**(Demo)** Câu 1: ba cổng của LSTM là gì? Đáp án A: forget, input, output.
+**(Demo)** Câu 1: ba cổng của LSTM là gì? Đáp án A: cổng quên, cổng ghi, cổng đọc.
 
-Câu 2: các cổng dùng hàm kích hoạt nào? Đáp án B, sigmoid, vì cần giá trị trong khoảng 0 đến 1.
+Câu 2: các cổng dùng hàm kích hoạt nào? Đáp án B, sigmoid, vì cần một con số từ 0 đến 1 giống độ mở của cái van.
 
-Câu 3: thành phần nào là bộ nhớ dài hạn? Đáp án C, cell state c t.
+Câu 3: thành phần nào là bộ nhớ dài hạn? Đáp án C, trạng thái ô nhớ.
 
-Câu 4: LSTM khắc phục vấn đề nào của RNN? Đáp án A, gradient biến mất.
+Câu 4: LSTM sinh ra để khắc phục vấn đề nào của RNN? Đáp án A: tín hiệu lỗi yếu dần rồi biến mất.
 -->
 
 ---
@@ -1346,10 +1266,10 @@ class: text-center
 
 # Cảm ơn thầy và các bạn đã lắng nghe!
 
-## Q&A
+## Hỏi đáp
 
 <div class="mt-8 text-sm opacity-70">
-Tài liệu: Hochreiter & Schmidhuber (1997) · Gers et al. (2000) · Graves & Schmidhuber (2005) · Bengio et al. (1994) · colah.github.io/posts/2015-08-Understanding-LSTMs
+Tài liệu: Hochreiter & Schmidhuber (1997) · Gers và cộng sự (2000) · Graves & Schmidhuber (2005) · Bengio và cộng sự (1994) · colah.github.io/posts/2015-08-Understanding-LSTMs
 </div>
 
 <!--
@@ -1358,8 +1278,8 @@ Tài liệu: Hochreiter & Schmidhuber (1997) · Gers et al. (2000) · Graves & S
 Phần trình bày của nhóm mình đến đây là kết thúc. Cảm ơn thầy và các bạn đã lắng nghe. Nhóm mình xin nhận câu hỏi.
 
 *(Gợi ý chuẩn bị trước một số câu hỏi có thể gặp:)*
-- *Vì sao không dùng ReLU cho các cổng?* Vì cổng là hệ số nhân, cần giá trị trong (0, 1); ReLU không bị chặn trên.
-- *LSTM có loại bỏ hoàn toàn gradient biến mất không?* Không. Nó chỉ tạo một đường truyền mà mạng **có thể học** để giữ gradient; nếu f t nhỏ thì gradient vẫn suy giảm theo tích các f t.
-- *Vì sao trên dữ liệu e-commerce LSTM chỉ hơn RNN rất ít?* Chuỗi chỉ 8 đơn, thông tin chủ yếu nằm ở đơn đang đặt và vài đơn gần nhất, không có phụ thuộc xa; trong khi LSTM có gấp 4 tham số và chậm hơn 2 lần. Nên luôn so sánh với RNN trước khi chọn LSTM.
-- *Với cổ phiếu, sao không dùng cửa sổ dài hơn để LSTM thắng đậm hơn?* Nhóm đã thử 20, 60 và 120 ngày: cửa sổ 20 ngày tốt nhất cho cả hai mô hình, vì thông tin quan trọng nằm trong khoảng một tháng gần đây. LSTM tốt hơn RNN ở cả ba độ dài; còn RNN với 120 ngày cho kết quả y hệt 60 ngày.
+- *Vì sao các cổng không dùng ReLU?* Vì cổng là một hệ số nhân, cần nằm trong khoảng 0 đến 1 như độ mở của cái van. ReLU không có giới hạn trên, có thể ra số rất lớn.
+- *LSTM có hết hẳn hiện tượng tín hiệu lỗi biến mất không?* Không hẳn. Nó tạo ra một con đường mà mạng có thể học để giữ tín hiệu; nếu cổng quên nhỏ thì tín hiệu vẫn yếu dần.
+- *Vì sao ở thí nghiệm đơn hàng, LSTM chỉ hơn RNN rất ít?* Chuỗi chỉ có 8 đơn, thông tin quan trọng nằm ở đơn đang đặt và vài đơn gần nhất, không có gì ở xa cần nhớ. Trong khi đó LSTM có gấp 4 lần trọng số và chạy chậm gấp đôi. Nên luôn thử RNN trước khi chọn LSTM.
+- *Với cổ phiếu, sao không cho xem nhiều ngày hơn để LSTM thắng đậm hơn?* Nhóm đã thử 20, 60 và 120 ngày: 20 ngày tốt nhất cho cả hai mô hình, vì thông tin quan trọng nằm trong khoảng một tháng gần đây. LSTM tốt hơn RNN ở cả ba trường hợp, còn RNN với 120 ngày cho kết quả y hệt 60 ngày.
 -->

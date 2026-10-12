@@ -2,9 +2,9 @@
 // Giá trị MINH HỌA (không phải số đo từ mô hình thật) cho câu ví dụ "Pháp … tiếng ___"
 const words = ['Tôi', 'lớn', 'lên', 'ở', 'Pháp', ',', '…', '…', 'nên', 'tôi', 'nói', 'tiếng']
 const rows = [
-  { name: 'f (forget)', color: '220,38,38', v: [0.5, 0.9, 0.9, 0.9, 0.9, 0.98, 0.99, 0.99, 0.98, 0.97, 0.97, 0.95] },
-  { name: 'i (input)', color: '22,163,74', v: [0.3, 0.1, 0.1, 0.2, 0.95, 0.05, 0.05, 0.05, 0.1, 0.1, 0.2, 0.3] },
-  { name: 'o (output)', color: '124,58,237', v: [0.2, 0.1, 0.1, 0.1, 0.2, 0.1, 0.1, 0.1, 0.2, 0.2, 0.5, 0.95] },
+  { name: 'Cổng quên', color: '220,38,38', v: [0.5, 0.9, 0.9, 0.9, 0.9, 0.98, 0.99, 0.99, 0.98, 0.97, 0.97, 0.95] },
+  { name: 'Cổng ghi', color: '22,163,74', v: [0.3, 0.1, 0.1, 0.2, 0.95, 0.05, 0.05, 0.05, 0.1, 0.1, 0.2, 0.3] },
+  { name: 'Cổng đọc', color: '124,58,237', v: [0.2, 0.1, 0.1, 0.1, 0.2, 0.1, 0.1, 0.1, 0.2, 0.2, 0.5, 0.95] },
 ]
 </script>
 
@@ -17,7 +17,7 @@ const rows = [
       <td></td>
     </tr>
   </tbody></table>
-  <div class="note">* Số liệu minh họa để giải thích ý tưởng, không phải đo từ một mô hình đã huấn luyện.</div>
+  <div class="note">* Số liệu minh họa để giải thích ý tưởng, không phải đo từ một mô hình đã huấn luyện. Màu càng đậm = cổng càng mở (gần 1).</div>
 </template>
 
 <style scoped>

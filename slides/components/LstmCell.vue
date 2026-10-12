@@ -30,8 +30,9 @@ const v = computed(() => props.values || {})
       <line x1="10" y1="80" x2="152" y2="80" />
       <line x1="188" y1="80" x2="312" y2="80" />
       <line x1="348" y1="80" x2="645" y2="80" marker-end="url(#arr)" />
-      <text x="12" y="68" class="lbl">c<tspan dy="4" style="font-size:12px;font-style:italic">t-1</tspan></text>
-      <text x="612" y="68" class="lbl">c<tspan dy="4" style="font-size:12px;font-style:italic">t</tspan></text>
+      <text x="8" y="28" class="cap">bộ nhớ cũ</text>
+      <text x="652" y="28" class="cap" text-anchor="end">bộ nhớ mới</text>
+      <text x="356" y="70" class="cap">trạng thái ô nhớ</text>
       <text v-if="values" x="12" y="102" class="num">{{ fmt(v.cPrev) }}</text>
       <text v-if="values" x="600" y="102" class="num">{{ fmt(v.c) }}</text>
     </g>
@@ -40,8 +41,8 @@ const v = computed(() => props.values || {})
     <g class="part on input">
       <line x1="10" y1="255" x2="470" y2="255" />
       <line x1="100" y1="330" x2="100" y2="255" />
-      <text x="12" y="245" class="lbl">h<tspan dy="4" style="font-size:12px;font-style:italic">t-1</tspan></text>
-      <text x="110" y="326" class="lbl">x<tspan dy="4" style="font-size:12px;font-style:italic">t</tspan></text>
+      <text x="8" y="298" class="cap">đầu ra cũ</text>
+      <text x="110" y="326" class="cap">đầu vào (từ hiện tại)</text>
       <text v-if="values" x="12" y="276" class="num">{{ fmt(v.hPrev) }}</text>
       <text v-if="values" x="126" y="306" class="num">{{ fmt(v.x) }}</text>
     </g>
@@ -54,7 +55,7 @@ const v = computed(() => props.values || {})
       <text x="170" y="206" class="op">σ</text>
       <circle cx="170" cy="80" r="18" class="node" />
       <text x="170" y="86" class="op">×</text>
-      <text x="124" y="150" class="glbl">f<tspan dy="4" style="font-size:12px;font-style:italic">t</tspan></text>
+      <text x="112" y="150" class="cap" text-anchor="middle">cổng quên</text>
       <text v-if="values" x="178" y="150" class="num">{{ fmt(v.f) }}</text>
     </g>
 
@@ -64,7 +65,7 @@ const v = computed(() => props.values || {})
       <rect x="238" y="182" width="44" height="36" rx="6" class="gate" />
       <text x="260" y="206" class="op">σ</text>
       <polyline points="260,182 260,140 312,140" fill="none" />
-      <text x="222" y="160" class="glbl">i<tspan dy="4" style="font-size:12px;font-style:italic">t</tspan></text>
+      <text x="214" y="166" class="cap" text-anchor="middle">cổng ghi</text>
       <text v-if="values" x="210" y="130" class="num">{{ fmt(v.i) }}</text>
     </g>
     <g :class="cls('c')">
@@ -72,7 +73,7 @@ const v = computed(() => props.values || {})
       <rect x="300" y="182" width="60" height="36" rx="6" class="gate" />
       <text x="330" y="206" class="op small">tanh</text>
       <line x1="330" y1="182" x2="330" y2="158" />
-      <text x="370" y="176" class="glbl">c̃<tspan dy="4" style="font-size:12px;font-style:italic">t</tspan></text>
+      <text x="368" y="172" class="cap">nội dung mới</text>
       <text v-if="values" x="370" y="200" class="num">{{ fmt(v.g) }}</text>
     </g>
     <g :class="on('i') || on('c') ? 'part on ic' : 'part off'">
@@ -98,9 +99,9 @@ const v = computed(() => props.values || {})
       <circle cx="530" cy="200" r="18" class="node" />
       <text x="530" y="206" class="op">×</text>
       <polyline points="530,218 530,300 645,300" fill="none" marker-end="url(#arr)" />
-      <text x="430" y="170" class="glbl">o<tspan dy="4" style="font-size:12px;font-style:italic">t</tspan></text>
-      <text x="612" y="290" class="lbl">h<tspan dy="4" style="font-size:12px;font-style:italic">t</tspan></text>
-      <text v-if="values" x="480" y="236" class="num">{{ fmt(v.o) }}</text>
+      <text x="524" y="244" class="cap" text-anchor="end">cổng đọc</text>
+      <text x="652" y="290" class="cap" text-anchor="end">đầu ra mới</text>
+      <text v-if="values" x="478" y="268" class="num">{{ fmt(v.o) }}</text>
       <text v-if="values" x="600" y="324" class="num">{{ fmt(v.h) }}</text>
     </g>
   </svg>
@@ -115,7 +116,7 @@ line, polyline { stroke: currentColor; stroke-width: 2.5; }
 .op { text-anchor: middle; font-size: 20px; fill: currentColor; font-weight: 600; }
 .op.small { font-size: 14px; }
 .lbl { font-size: 18px; fill: currentColor; font-style: italic; }
-.glbl { font-size: 18px; font-weight: 700; fill: currentColor; font-style: italic; }
+.cap { font-size: 15px; font-weight: 600; fill: currentColor; }
 .num { font-size: 14px; font-family: ui-monospace, monospace; fill: #0f172a; font-weight: 700; }
 .part { transition: opacity .4s, color .4s; }
 .part.off { opacity: .18; }

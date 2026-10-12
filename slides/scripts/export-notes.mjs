@@ -10,7 +10,7 @@ const data = await parse(readFileSync(src, 'utf8'), src)
 const parts = [
   { who: 'Người 1', name: 'Phần 1 — Vì sao cần LSTM? + lịch sử ra đời' },
   { who: 'Người 2', name: 'Phần 2 — Bên trong một ô LSTM' },
-  { who: 'Người 3', name: 'Phần 3 — Toán của LSTM + thí nghiệm so sánh với RNN' },
+  { who: 'Người 3', name: 'Phần 3 — Vì sao LSTM nhớ lâu + thí nghiệm so sánh với RNN' },
   { who: 'Người 4', name: 'Phần 4 — LSTM trong thực tế + tổng kết' },
   { who: 'Cả nhóm', name: 'Q&A' },
 ]
