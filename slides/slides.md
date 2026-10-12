@@ -1257,8 +1257,6 @@ Ba: nhờ phép cộng trong cách cập nhật bộ nhớ, tín hiệu lỗi c�
 
 # Câu hỏi 1/4
 
-<div class="text-sm opacity-60 mb-3">Bấm vào đáp án để kiểm tra: đúng chuyển xanh và hiện lời giải, sai chuyển đỏ</div>
-
 <QuizSet :n="1" />
 
 <!--
@@ -1273,8 +1271,6 @@ Mời các bạn chọn đáp án, mình sẽ bấm vào đáp án được ch�
 
 # Câu hỏi 2/4
 
-<div class="text-sm opacity-60 mb-3">Bấm vào đáp án để kiểm tra</div>
-
 <QuizSet :n="2" />
 
 <!--
@@ -1287,8 +1283,6 @@ Mời các bạn chọn đáp án, mình sẽ bấm vào đáp án được ch�
 
 # Câu hỏi 3/4
 
-<div class="text-sm opacity-60 mb-3">Bấm vào đáp án để kiểm tra</div>
-
 <QuizSet :n="3" />
 
 <!--
@@ -1300,8 +1294,6 @@ Mời các bạn chọn đáp án, mình sẽ bấm vào đáp án được ch�
 ---
 
 # Câu hỏi 4/4
-
-<div class="text-sm opacity-60 mb-3">Bấm vào đáp án để kiểm tra</div>
 
 <QuizSet :n="4" />
 
